@@ -1,4 +1,5 @@
 #!/bin/bash
+#V1.1.0
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -43,6 +44,77 @@ check_adb_connection() {
     echo -e "${GREEN}✓ Dispositivo conectado: $DEVICE${NC}"
 }
 
+check_updates() {
+    local REPO_URL="https://raw.githubusercontent.com/hugooae/ADB-Manager-Gestor-Android/main/adb_manager.sh"
+    local CURRENT_VERSION=$(sed -n '2p' "$0" | grep -oP '(?<=#V)[0-9.]+' || echo "unknown")
+    
+    local REMOTE_SCRIPT=$(curl -s "$REPO_URL" 2>/dev/null)
+    
+    if [ -z "$REMOTE_SCRIPT" ]; then
+        return
+    fi
+    
+    local REMOTE_VERSION=$(echo "$REMOTE_SCRIPT" | sed -n '2p' | grep -oP '(?<=#V)[0-9.]+' || echo "unknown")
+    
+    if [ "$REMOTE_VERSION" != "$CURRENT_VERSION" ]; then
+        export UPDATE_AVAILABLE=true
+        export REMOTE_VERSION="$REMOTE_VERSION"
+        export CURRENT_VERSION="$CURRENT_VERSION"
+        export REMOTE_SCRIPT="$REMOTE_SCRIPT"
+    fi
+}
+
+show_update_dialog() {
+    while true; do
+        clear_screen
+        echo -e "${CYAN}"
+        echo "╔═══════════════════════════════════════════════════╗"
+        echo "║          ADB MANAGER - Gestor Android             ║"
+        echo "╚═══════════════════════════════════════════════════╝"
+        echo "Repositorio: https://github.com/hugooae/ADB-Manager-Gestor-Android"
+        echo -e "${NC}"
+        echo ""
+        echo -e "${YELLOW}════════════════════════════════════════════════════${NC}"
+        echo -e "${YELLOW}Nueva versión disponible: v$REMOTE_VERSION${NC}"
+        echo -e "${YELLOW}Versión actual: v$CURRENT_VERSION${NC}"
+        echo -e "${YELLOW}════════════════════════════════════════════════════${NC}"
+        echo ""
+        echo "1. Actualizar ahora"
+        echo "2. Continuar con versión actual"
+        echo ""
+        echo -n "Selecciona una opción: "
+        read option
+        
+        case $option in
+            1)
+                echo -e "${YELLOW}Descargando actualización...${NC}"
+                
+                local BACKUP_FILE="$0.backup.v$CURRENT_VERSION"
+                cp "$0" "$BACKUP_FILE"
+                echo -e "${GREEN}Backup creado: $BACKUP_FILE${NC}"
+                
+                echo "$REMOTE_SCRIPT" > "$0"
+                chmod +x "$0"
+                
+                echo -e "${GREEN}Actualización completada exitosamente${NC}"
+                echo -e "${GREEN}Versión: v$CURRENT_VERSION -> v$REMOTE_VERSION${NC}"
+                echo ""
+                echo -e "${YELLOW}Reiniciando script...${NC}"
+                sleep 2
+                exec "$0" "$@"
+                ;;
+            2)
+                export UPDATE_AVAILABLE=false
+                break
+                ;;
+            *)
+                echo -e "${RED}Opción inválida${NC}"
+                sleep 1
+                ;;
+        esac
+    done
+}
+
 show_banner() {
     clear_screen
     echo -e "${CYAN}"
@@ -60,16 +132,17 @@ main_menu() {
     while true; do
         show_banner
         echo -e "${BLUE}═══ MENÚ PRINCIPAL ═══${NC}"
-        echo "1. ➜ Información del Dispositivo"
-        echo "2. ➜ Gestión de Aplicaciones"
-        echo "3. ➜ Gestión de Archivos"
-        echo "4. ➜ Capturas y Grabación"
-        echo "5. ➜ Herramientas Avanzadas"
-        echo "6. ➜ Red y Conectividad"
-        echo "7. ➜ Logs y Monitoreo"
-        echo "8. ➜ Control del Dispositivo"
-        echo "9. ➜ Backup y Restauración"
-        echo "0. ➜ Salir"
+        echo "1. Información del Dispositivo"
+        echo "2. Gestión de Aplicaciones"
+        echo "3. Gestión de Archivos"
+        echo "4. Capturas y Grabación"
+        echo "5. Herramientas Avanzadas"
+        echo "6. Red y Conectividad"
+        echo "7. Logs y Monitoreo"
+        echo "8. Control del Dispositivo"
+        echo "9. Backup y Restauración"
+        echo "10. Generar Reporte del Dispositivo Conectado"
+        echo "0. Salir"
         echo ""
         echo -n "Selecciona una opción: "
         read option
@@ -84,6 +157,7 @@ main_menu() {
             7) logs_menu ;;
             8) control_menu ;;
             9) backup_menu ;;
+            10) generate_report_menu ;;
             0) echo -e "${GREEN}¡Hasta luego!${NC}"; exit 0 ;;
             *) echo -e "${RED}Opción inválida${NC}"; sleep 1 ;;
         esac
@@ -842,5 +916,146 @@ backup_menu() {
         esac
     done
 }
+
+generate_report_menu() {
+    show_banner
+    echo -e "${BLUE}═══ GENERAR REPORTE DEL DISPOSITIVO ═══${NC}"
+    echo ""
+    
+    TIMESTAMP=$(date +"%d-%m-%Y_%H-%M-%S")
+    REPORT_FILE="reporte_dispositivo_$TIMESTAMP.txt"
+    
+    echo -e "${YELLOW}Recopilando información del dispositivo...${NC}"
+    
+    {
+        echo ""
+        echo "╔════════════════════════════════════════════════════════════════════════╗"
+        echo "║                                                                        ║"
+        echo "║           REPORTE COMPLETO DEL DISPOSITIVO ANDROID                    ║"
+        echo "║                                                                        ║"
+        echo "╚════════════════════════════════════════════════════════════════════════╝"
+        echo ""
+        echo "Generado con: ADB Manager - Gestor Android"
+        echo "Repositorio:  https://github.com/hugooae/ADB-Manager-Gestor-Android"
+        echo "Fecha:        $(date '+%d de %B de %Y a las %H:%M:%S')"
+        echo ""
+        echo "════════════════════════════════════════════════════════════════════════"
+        echo ""
+        
+        echo "INFORMACION GENERAL DEL DISPOSITIVO"
+        echo "────────────────────────────────────────────────────────────────────────"
+        printf "%-35s %s\n" "Fabricante:" "$(adb shell getprop ro.product.manufacturer 2>/dev/null)"
+        printf "%-35s %s\n" "Modelo:" "$(adb shell getprop ro.product.model 2>/dev/null)"
+        printf "%-35s %s\n" "Dispositivo:" "$(adb shell getprop ro.product.device 2>/dev/null)"
+        printf "%-35s %s\n" "Nombre del Host:" "$(adb shell getprop ro.build.host 2>/dev/null)"
+        echo ""
+        
+        echo "INFORMACION DE SOFTWARE"
+        echo "────────────────────────────────────────────────────────────────────────"
+        printf "%-35s %s\n" "Version de Android:" "$(adb shell getprop ro.build.version.release 2>/dev/null)"
+        printf "%-35s %s\n" "Nivel de API (SDK):" "$(adb shell getprop ro.build.version.sdk 2>/dev/null)"
+        printf "%-35s %s\n" "Numero de Compilacion:" "$(adb shell getprop ro.build.id 2>/dev/null)"
+        printf "%-35s %s\n" "Usuario de Compilacion:" "$(adb shell getprop ro.build.user 2>/dev/null)"
+        printf "%-35s %s\n" "Tipo de Compilacion:" "$(adb shell getprop ro.build.type 2>/dev/null)"
+        printf "%-35s %s\n" "Fingerprint:" "$(adb shell getprop ro.build.fingerprint 2>/dev/null)"
+        echo ""
+        
+        echo "INFORMACION DE BATERIA"
+        echo "────────────────────────────────────────────────────────────────────────"
+        adb shell dumpsys battery 2>/dev/null | grep -E "current level|health|status|temperature|voltage|technology|capacity" | sed 's/^  //'
+        echo ""
+        
+        echo "INFORMACION DE CPU"
+        echo "────────────────────────────────────────────────────────────────────────"
+        printf "%-35s %s\n" "Procesador:" "$(adb shell getprop ro.hardware 2>/dev/null)"
+        printf "%-35s %s\n" "Arquitectura:" "$(adb shell getprop ro.product.cpu.abi 2>/dev/null)"
+        printf "%-35s %s\n" "ABI Secundario:" "$(adb shell getprop ro.product.cpu.abilist 2>/dev/null)"
+        echo ""
+        echo "Detalles del Procesador:"
+        adb shell cat /proc/cpuinfo 2>/dev/null | head -20
+        echo ""
+        
+        echo "MEMORIA RAM"
+        echo "────────────────────────────────────────────────────────────────────────"
+        adb shell dumpsys meminfo 2>/dev/null | head -20
+        echo ""
+        
+        echo "ALMACENAMIENTO"
+        echo "────────────────────────────────────────────────────────────────────────"
+        adb shell df -h 2>/dev/null | grep -E "^/|Filesystem"
+        echo ""
+        
+        echo "INFORMACION DE PANTALLA"
+        echo "────────────────────────────────────────────────────────────────────────"
+        printf "%-35s %s\n" "Resolucion:" "$(adb shell wm size 2>/dev/null | sed 's/Physical size: //')"
+        printf "%-35s %s\n" "Densidad (DPI):" "$(adb shell wm density 2>/dev/null | sed 's/Physical density: //')"
+        echo ""
+        
+        echo "APLICACIONES DEL SISTEMA"
+        echo "────────────────────────────────────────────────────────────────────────"
+        local total_system=$(adb shell pm list packages -s 2>/dev/null | wc -l)
+        printf "%-35s %s\n" "Total de Aplicaciones:" "$total_system"
+        echo ""
+        echo "Listado de Aplicaciones del Sistema:"
+        adb shell pm list packages -s 2>/dev/null | cut -d: -f2 | sort | nl | head -50
+        if [ $(adb shell pm list packages -s 2>/dev/null | wc -l) -gt 50 ]; then
+            echo "... y mas aplicaciones"
+        fi
+        echo ""
+        
+        echo "APLICACIONES DE USUARIO"
+        echo "────────────────────────────────────────────────────────────────────────"
+        local total_user=$(adb shell pm list packages -3 2>/dev/null | wc -l)
+        printf "%-35s %s\n" "Total de Aplicaciones:" "$total_user"
+        echo ""
+        echo "Listado de Aplicaciones Instaladas:"
+        adb shell pm list packages -3 2>/dev/null | cut -d: -f2 | sort | nl
+        echo ""
+        
+        echo "CONECTIVIDAD"
+        echo "────────────────────────────────────────────────────────────────────────"
+        printf "%-35s %s\n" "Baseband (Modem):" "$(adb shell getprop ro.baseband 2>/dev/null || echo 'N/A')"
+        printf "%-35s %s\n" "Soporte Telefonia:" "$(adb shell getprop ro.telephony.use_old_mnc_mcc 2>/dev/null || echo 'N/A')"
+        echo ""
+        
+        echo "SEGURIDAD"
+        echo "────────────────────────────────────────────────────────────────────────"
+        printf "%-35s %s\n" "Modo Seguro Activado:" "$(adb shell getprop ro.secure 2>/dev/null)"
+        printf "%-35s %s\n" "Depuracion Habilitada:" "$(adb shell getprop ro.debuggable 2>/dev/null)"
+        echo ""
+        
+        echo "════════════════════════════════════════════════════════════════════════"
+        echo ""
+        echo "╔════════════════════════════════════════════════════════════════════════╗"
+        echo "║                     FIN DEL REPORTE                                    ║"
+        echo "║                                                                        ║"
+        echo "║  Este reporte contiene informacion completa del dispositivo conectado ║"
+        echo "║  Generado automáticamente por ADB Manager                              ║"
+        echo "║                                                                        ║"
+        echo "╚════════════════════════════════════════════════════════════════════════╝"
+        echo ""
+        
+    } > "$REPORT_FILE" 2>/dev/null
+    
+    if [ -f "$REPORT_FILE" ] && [ -s "$REPORT_FILE" ]; then
+        echo -e "${GREEN}Reporte generado exitosamente${NC}"
+        echo ""
+        echo -e "  Archivo:   ${CYAN}$REPORT_FILE${NC}"
+        echo -e "  Ubicacion: ${CYAN}$PWD/$REPORT_FILE${NC}"
+        echo ""
+    else
+        echo -e "${RED}Error: No se pudo generar el reporte${NC}"
+    fi
+    
+    pause
+}
+
+check_updates &
+UPDATE_PID=$!
+wait $UPDATE_PID 2>/dev/null
+
+if [ "$UPDATE_AVAILABLE" = "true" ]; then
+    show_update_dialog
+fi
 
 main_menu
