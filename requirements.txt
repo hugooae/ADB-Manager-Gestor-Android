@@ -1,0 +1,44 @@
+# ADB Manager - Gestor Android
+# V1.1.0
+
+# Requisitos y dependencias del sistema
+
+# REQUISITOS DEL SISTEMA
+# Este script funciona en sistemas Linux/Unix (Bash)
+
+# HERRAMIENTAS REQUERIDAS (deben estar instaladas en el sistema)
+bash>=4.0
+android-tools-adb
+curl
+
+# COMANDOS UNIX ESTÁNDAR (generalmente preinstalados)
+grep
+sed
+awk
+cut
+sort
+nl
+wc
+date
+sleep
+echo
+clear
+read
+
+# CONFIGURACIÓN DEL DISPOSITIVO REQUERIDA
+# - Dispositivo Android con USB Debug habilitado
+# - Conexión USB o WiFi al dispositivo
+# - Permiso para ejecutar comandos ADB
+
+# INSTALACIÓN EN DEBIAN/UBUNTU
+# sudo apt update
+# sudo apt install -y android-tools-adb curl
+
+# INSTALACIÓN EN FEDORA/RHEL
+# sudo dnf install -y android-tools curl
+
+# INSTALACIÓN EN ARCH
+# sudo pacman -S android-tools curl
+
+# NOTA: El script genera reportes en formato texto (.txt)
+# que pueden leerse en cualquier editor de texto.
