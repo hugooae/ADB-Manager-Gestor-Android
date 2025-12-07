@@ -1,6 +1,6 @@
 # ADB Manager - Gestor Android
 
-![GitHub Repo Size](https://img.shields.io/github/repo-size/hugooae/ADB-Manager-Gestor-Android) ![GitHub](https://img.shields.io/github/license/hugooae/ADB-Manager-Gestor-Android) ![GitHub last commit](https://img.shields.io/github/last-commit/hugooae/ADB-Manager-Gestor-Android) ![Version](https://img.shields.io/badge/version-1.2.0-blue)
+![GitHub Repo Size](https://img.shields.io/github/repo-size/hugooae/ADB-Manager-Gestor-Android) ![GitHub](https://img.shields.io/github/license/hugooae/ADB-Manager-Gestor-Android) ![GitHub last commit](https://img.shields.io/github/last-commit/hugooae/ADB-Manager-Gestor-Android) ![Version](https://img.shields.io/badge/version-1.2.1-blue)
 
 ## Descripción
 
@@ -160,6 +160,15 @@ Al ejecutar el script, verás un **menú interactivo**. Solo selecciona la opci�
 
 ---
 
+## 🆕 Novedades en v1.2.1
+
+* ✅ **Eliminación de menús no utilizados**
+  - Se han removido completamente las funciones `optimization_menu()` y `permissions_menu()`
+  - Menú principal simplificado a 12 opciones principales
+  - Código más limpio y enfocado en funcionalidades esenciales
+
+---
+
 ## 🆕 Novedades en v1.2.0
 
 * ✅ **Organización por dispositivo**
@@ -188,7 +197,13 @@ Al ejecutar el script, verás un **menú interactivo**. Solo selecciona la opci�
 
 ## 📋 Versiones
 
-* **v1.2.0** (Actual)
+* **v1.2.1** (Actual)
+  - Desinstalación mejorada de apps (sistema y terceros)
+  - Estructura de carpetas por dispositivo perfeccionada
+  - Banner con visualización mejorada de versión
+  - Mejor manejo de errores en desinstalación
+
+* **v1.2.0**
   - Organización automática por dispositivo
   - Personalización del sistema
   - Herramientas de seguridad avanzadas
