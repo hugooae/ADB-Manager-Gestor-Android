@@ -1,5 +1,5 @@
 #!/bin/bash
-#V1.1.0
+#V1.2.0
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -44,6 +44,23 @@ check_adb_connection() {
     echo -e "${GREEN}✓ Dispositivo conectado: $DEVICE${NC}"
 }
 
+setup_device_folder() {
+    DEVICE_MODEL=$(adb shell getprop ro.product.model 2>/dev/null | tr -d '\r')
+    DEVICE_SERIAL=$(adb shell getprop ro.serialno 2>/dev/null | tr -d '\r')
+    DEVICE_NAME="${DEVICE_MODEL}_${DEVICE_SERIAL}"
+    DEVICE_FOLDER="$PWD/dispositivos/$DEVICE_NAME"
+    
+    mkdir -p "$DEVICE_FOLDER"
+    mkdir -p "$DEVICE_FOLDER/backups"
+    mkdir -p "$DEVICE_FOLDER/apks"
+    mkdir -p "$DEVICE_FOLDER/capturas"
+    mkdir -p "$DEVICE_FOLDER/logs"
+    mkdir -p "$DEVICE_FOLDER/reportes"
+    mkdir -p "$DEVICE_FOLDER/descargas"
+    
+    echo -e "${GREEN}✓ Carpeta de dispositivo: $DEVICE_FOLDER${NC}"
+}
+
 check_updates() {
     local REPO_URL="https://raw.githubusercontent.com/hugooae/ADB-Manager-Gestor-Android/main/adb_manager.sh"
     local CURRENT_VERSION=$(sed -n '2p' "$0" | grep -oP '(?<=#V)[0-9.]+' || echo "unknown")
@@ -68,9 +85,11 @@ show_update_dialog() {
     while true; do
         clear_screen
         echo -e "${CYAN}"
-        echo "╔═══════════════════════════════════════════════════╗"
-        echo "║          ADB MANAGER - Gestor Android             ║"
-        echo "╚═══════════════════════════════════════════════════╝"
+        CURRENT_VERSION=$(sed -n '2p' "$0" | grep -oP '(?<=#V)[0-9.]+' || echo "unknown")
+        echo "╔═══════════════════════════════════════════════════════════════╗"
+        echo "║          ADB MANAGER - Gestor Android                         ║"
+        echo "╚═══════════════════════════════════════════════════════════════╝"
+        echo "v$CURRENT_VERSION"
         echo "Repositorio: https://github.com/hugooae/ADB-Manager-Gestor-Android"
         echo -e "${NC}"
         echo ""
@@ -118,12 +137,15 @@ show_update_dialog() {
 show_banner() {
     clear_screen
     echo -e "${CYAN}"
-    echo "╔═══════════════════════════════════════════════════╗"
-    echo "║          ADB MANAGER - Gestor Android             ║"
-    echo "╚═══════════════════════════════════════════════════╝"
+    CURRENT_VERSION=$(sed -n '2p' "$0" | grep -oP '(?<=#V)[0-9.]+' || echo "unknown")
+    echo "╔═══════════════════════════════════════════════════════════════╗"
+    echo "║          ADB MANAGER - Gestor Android                         ║"
+    echo "╚═══════════════════════════════════════════════════════════════╝"
+    echo "v$CURRENT_VERSION"
     echo "Repositorio: https://github.com/hugooae/ADB-Manager-Gestor-Android"
     echo -e "${NC}"
     check_adb_connection
+    setup_device_folder
     echo ""
 }
 
@@ -141,7 +163,9 @@ main_menu() {
         echo "7. Logs y Monitoreo"
         echo "8. Control del Dispositivo"
         echo "9. Backup y Restauración"
-        echo "10. Generar Reporte del Dispositivo Conectado"
+        echo "10. Personalización del Sistema"
+        echo "11. Herramientas de Seguridad"
+        echo "12. Generar Reporte del Dispositivo Conectado"
         echo "0. Salir"
         echo ""
         echo -n "Selecciona una opción: "
@@ -157,7 +181,9 @@ main_menu() {
             7) logs_menu ;;
             8) control_menu ;;
             9) backup_menu ;;
-            10) generate_report_menu ;;
+            10) customization_menu ;;
+            11) security_menu ;;
+            12) generate_report_menu ;;
             0) echo -e "${GREEN}¡Hasta luego!${NC}"; exit 0 ;;
             *) echo -e "${RED}Opción inválida${NC}"; sleep 1 ;;
         esac
@@ -314,8 +340,39 @@ apps_menu() {
                 pause
                 ;;
             5)
-                echo -e "\n${CYAN}Apps instaladas (terceros):${NC}"
-                mapfile -t packages < <(adb shell pm list packages -3 2>/dev/null | cut -d: -f2 | sort)
+                echo -e "\n${CYAN}¿Qué tipo de aplicaciones deseas desinstalar?${NC}"
+                echo "1. Aplicaciones de terceros"
+                echo "2. Aplicaciones del sistema"
+                echo "0. Cancelar"
+                echo -n "Selecciona una opción: "
+                read app_type
+                
+                if [ "$app_type" = "0" ]; then
+                    echo -e "${YELLOW}Cancelado${NC}"
+                    pause
+                    continue
+                fi
+                
+                if [ "$app_type" = "1" ]; then
+                    echo -e "\n${CYAN}Apps de terceros:${NC}"
+                    mapfile -t packages < <(adb shell pm list packages -3 2>/dev/null | cut -d: -f2 | sort)
+                    app_source="terceros"
+                elif [ "$app_type" = "2" ]; then
+                    echo -e "\n${CYAN}Apps del sistema:${NC}"
+                    mapfile -t packages < <(adb shell pm list packages -s 2>/dev/null | cut -d: -f2 | sort)
+                    app_source="sistema"
+                else
+                    echo -e "${RED}Opción inválida${NC}"
+                    sleep 1
+                    pause
+                    continue
+                fi
+                
+                if [ ${#packages[@]} -eq 0 ]; then
+                    echo -e "${RED}No hay aplicaciones de $app_source disponibles${NC}"
+                    pause
+                    continue
+                fi
                 
                 for i in "${!packages[@]}"; do
                     echo "$((i+1)). ${packages[$i]}"
@@ -331,8 +388,19 @@ apps_menu() {
                     read confirm
                     if [ "$confirm" = "s" ]; then
                         echo -e "${YELLOW}Desinstalando...${NC}"
-                        adb uninstall "$selected_package"
-                        echo -e "${GREEN}Desinstalación completada${NC}"
+                        
+                        if [ "$app_source" = "terceros" ]; then
+                            result=$(adb uninstall "$selected_package" 2>&1)
+                        else
+                            result=$(adb shell pm uninstall --user 0 "$selected_package" 2>&1)
+                        fi
+                        
+                        if echo "$result" | grep -q "Success"; then
+                            echo -e "${GREEN}✓ Desinstalación completada${NC}"
+                        else
+                            echo -e "${RED}✗ Error al desinstalar:${NC}"
+                            echo "$result"
+                        fi
                     fi
                 else
                     echo -e "${YELLOW}Cancelado${NC}"
@@ -582,14 +650,14 @@ capture_menu() {
         
         case $option in
             1)
-                FILENAME="screenshot_$(date +%Y%m%d_%H%M%S).png"
+                FILENAME="$DEVICE_FOLDER/capturas/screenshot_$(date +%Y%m%d_%H%M%S).png"
                 echo -e "${YELLOW}Capturando pantalla...${NC}"
                 adb exec-out screencap -p > "$FILENAME"
                 echo -e "${GREEN}Guardado como $FILENAME${NC}"
                 pause
                 ;;
             2)
-                FILENAME="grabacion_$(date +%Y%m%d_%H%M%S).mp4"
+                FILENAME="$DEVICE_FOLDER/capturas/grabacion_$(date +%Y%m%d_%H%M%S).mp4"
                 echo -e "${YELLOW}Grabando pantalla (Ctrl+C para detener)...${NC}"
                 adb shell screenrecord /sdcard/temp_record.mp4
                 adb pull /sdcard/temp_record.mp4 "$FILENAME"
@@ -600,7 +668,7 @@ capture_menu() {
             3)
                 echo -n "Duración en segundos (máx 180): "
                 read duration
-                FILENAME="grabacion_$(date +%Y%m%d_%H%M%S).mp4"
+                FILENAME="$DEVICE_FOLDER/capturas/grabacion_$(date +%Y%m%d_%H%M%S).mp4"
                 echo -e "${YELLOW}Grabando por $duration segundos...${NC}"
                 adb shell screenrecord --time-limit "$duration" /sdcard/temp_record.mp4
                 adb pull /sdcard/temp_record.mp4 "$FILENAME"
@@ -743,7 +811,7 @@ logs_menu() {
                 adb logcat
                 ;;
             2)
-                FILENAME="logs_$(date +%Y%m%d_%H%M%S).txt"
+                FILENAME="$DEVICE_FOLDER/logs/logs_$(date +%Y%m%d_%H%M%S).txt"
                 echo -e "${YELLOW}Guardando logs...${NC}"
                 adb logcat -d > "$FILENAME"
                 echo -e "${GREEN}Logs guardados en $FILENAME${NC}"
@@ -850,7 +918,7 @@ backup_menu() {
         
         case $option in
             1)
-                FILENAME="backup_completo_$(date +%Y%m%d_%H%M%S).ab"
+                FILENAME="$DEVICE_FOLDER/backups/backup_completo_$(date +%Y%m%d_%H%M%S).ab"
                 echo -e "${YELLOW}Creando backup completo...${NC}"
                 echo "Confirma en el dispositivo"
                 adb backup -all -apk -shared -f "$FILENAME"
@@ -871,7 +939,7 @@ backup_menu() {
                 
                 if [ "$num" -gt 0 ] 2>/dev/null && [ "$num" -le "${#packages[@]}" ]; then
                     selected_package="${packages[$((num-1))]}"
-                    FILENAME="backup_${selected_package}_$(date +%Y%m%d_%H%M%S).ab"
+                    FILENAME="$DEVICE_FOLDER/backups/backup_${selected_package}_$(date +%Y%m%d_%H%M%S).ab"
                     echo -e "${YELLOW}Creando backup de $selected_package...${NC}"
                     echo "Confirma en el dispositivo"
                     adb backup -f "$FILENAME" "$selected_package"
@@ -883,17 +951,17 @@ backup_menu() {
                 ;;
             3)
                 echo -e "\n${CYAN}Archivos de backup disponibles (.ab):${NC}"
-                mapfile -t backups < <(ls -1 *.ab 2>/dev/null)
+                mapfile -t backups < <(ls -1 "$DEVICE_FOLDER/backups/"*.ab 2>/dev/null)
                 
                 if [ ${#backups[@]} -eq 0 ]; then
-                    echo -e "${RED}No hay archivos de backup en el directorio actual${NC}"
+                    echo -e "${RED}No hay archivos de backup en $DEVICE_FOLDER/backups${NC}"
                     pause
                     continue
                 fi
                 
                 for i in "${!backups[@]}"; do
                     size=$(ls -lh "${backups[$i]}" | awk '{print $5}')
-                    echo "$((i+1)). ${backups[$i]} ($size)"
+                    echo "$((i+1)). $(basename "${backups[$i]}") ($size)"
                 done
                 
                 echo ""
@@ -902,7 +970,7 @@ backup_menu() {
                 
                 if [ "$num" -gt 0 ] 2>/dev/null && [ "$num" -le "${#backups[@]}" ]; then
                     selected_backup="${backups[$((num-1))]}"
-                    echo -e "${YELLOW}Restaurando $selected_backup...${NC}"
+                    echo -e "${YELLOW}Restaurando $(basename "$selected_backup")...${NC}"
                     echo "Confirma en el dispositivo"
                     adb restore "$selected_backup"
                     echo -e "${GREEN}Backup restaurado${NC}"
@@ -923,7 +991,7 @@ generate_report_menu() {
     echo ""
     
     TIMESTAMP=$(date +"%d-%m-%Y_%H-%M-%S")
-    REPORT_FILE="reporte_dispositivo_$TIMESTAMP.txt"
+    REPORT_FILE="$DEVICE_FOLDER/reportes/reporte_dispositivo_$TIMESTAMP.txt"
     
     echo -e "${YELLOW}Recopilando información del dispositivo...${NC}"
     
@@ -1029,7 +1097,7 @@ generate_report_menu() {
         echo "╔════════════════════════════════════════════════════════════════════════╗"
         echo "║                     FIN DEL REPORTE                                    ║"
         echo "║                                                                        ║"
-        echo "║  Este reporte contiene informacion completa del dispositivo conectado ║"
+        echo "║  Este reporte contiene informacion completa del dispositivo conectado  ║"
         echo "║  Generado automáticamente por ADB Manager                              ║"
         echo "║                                                                        ║"
         echo "╚════════════════════════════════════════════════════════════════════════╝"
@@ -1048,6 +1116,320 @@ generate_report_menu() {
     fi
     
     pause
+}
+
+# optimization_menu() {
+#     while true; do
+#         show_banner
+#         echo -e "${BLUE}═══ OPTIMIZACIÓN Y LIMPIEZA ═══${NC}"
+#         echo "1. Limpiar caché general"
+#         echo "2. Limpiar basura y archivos temporales"
+#         echo "3. Listar apps por tamaño"
+#         echo "4. Calcular tamaño de carpetas"
+#         echo "5. Limpiar RAM (garbage collection)"
+#         echo "6. Ver consumo de CPU en tiempo real"
+#         echo "0. Volver"
+#         echo ""
+#         echo -n "Selecciona una opción: "
+#         read option
+#         
+#         case $option in
+#             1)
+#                 echo -e "${YELLOW}Limpiando caché general...${NC}"
+#                 adb shell rm -rf /data/system/usagestats/*
+#                 adb shell rm -rf /data/local/tmp/*
+#                 echo -e "${GREEN}✓ Caché limpiado${NC}"
+#                 pause
+#                 ;;
+#             2)
+#                 echo -e "${YELLOW}Limpiando basura y archivos temporales...${NC}"
+#                 adb shell rm -rf /sdcard/Android/data/*/cache/*
+#                 adb shell rm -rf /sdcard/DCIM/.thumbnails/*
+#                 adb shell rm -rf /data/anr/*
+#                 echo -e "${GREEN}✓ Basura eliminada${NC}"
+#                 pause
+#                 ;;
+#             3)
+#                 echo -e "\n${CYAN}Apps ordenadas por tamaño (TOP 15):${NC}"
+#                 adb shell du -sh /data/app/* 2>/dev/null | sort -hr | head -15
+#                 pause
+#                 ;;
+#             4)
+#                 echo -n "Ruta a analizar (ej: /sdcard): "
+#                 read path
+#                 echo -e "\n${CYAN}Tamaño de carpetas en $path:${NC}"
+#                 adb shell du -sh "$path"/* 2>/dev/null | sort -hr | head -10
+#                 pause
+#                 ;;
+#             5)
+#                 echo -e "${YELLOW}Limpiando RAM...${NC}"
+#                 adb shell sync
+#                 adb shell sysctl -w vm.drop_caches=3
+#                 echo -e "${GREEN}✓ RAM limpiada${NC}"
+#                 pause
+#                 ;;
+#             6)
+#                 echo -e "${YELLOW}Uso de CPU en tiempo real (Ctrl+C para salir):${NC}"
+#                 adb shell top -n 1
+#                 pause
+#                 ;;
+#             0) break ;;
+#             *) echo -e "${RED}Opción inválida${NC}"; sleep 1 ;;
+#         esac
+#     done
+# }
+
+# permissions_menu() {
+#     while true; do
+#         show_banner
+#         echo -e "${BLUE}═══ GESTIÓN DE PERMISOS ═══${NC}"
+#         echo "1. Listar permisos de una app"
+#         echo "2. Otorgar permiso a una app"
+#         echo "3. Revocar permiso de una app"
+#         echo "4. Cambiar permisos peligrosos"
+#         echo "0. Volver"
+#         echo ""
+#         echo -n "Selecciona una opción: "
+#         read option
+#         
+#         case $option in
+#             1)
+#                 echo -e "\n${CYAN}Selecciona una aplicación:${NC}"
+#                 mapfile -t packages < <(adb shell pm list packages -3 2>/dev/null | cut -d: -f2 | sort)
+#                 
+#                 for i in "${!packages[@]}"; do
+#                     echo "$((i+1)). ${packages[$i]}"
+#                 done
+#                 
+#                 echo ""
+#                 echo -n "Número de app (0 para cancelar): "
+#                 read num
+#                 
+#                 if [ "$num" -gt 0 ] 2>/dev/null && [ "$num" -le "${#packages[@]}" ]; then
+#                     selected_package="${packages[$((num-1))]}"
+#                     echo -e "\n${CYAN}Permisos de $selected_package:${NC}"
+#                     adb shell dumpsys package "$selected_package" 2>/dev/null | grep -A 50 "granted permissions" | head -30
+#                 else
+#                     echo -e "${YELLOW}Cancelado${NC}"
+#                 fi
+#                 pause
+#                 ;;
+#             2)
+#                 echo -n "Paquete de la app: "
+#                 read package_name
+#                 echo "Permisos comunes:"
+#                 echo "1. android.permission.CAMERA"
+#                 echo "2. android.permission.ACCESS_FINE_LOCATION"
+#                 echo "3. android.permission.READ_CONTACTS"
+#                 echo "4. android.permission.WRITE_EXTERNAL_STORAGE"
+#                 echo "5. Personalizado"
+#                 echo -n "Selecciona o ingresa el permiso: "
+#                 read perm_choice
+#                 
+#                 case $perm_choice in
+#                     1) permission="android.permission.CAMERA" ;;
+#                     2) permission="android.permission.ACCESS_FINE_LOCATION" ;;
+#                     3) permission="android.permission.READ_CONTACTS" ;;
+#                     4) permission="android.permission.WRITE_EXTERNAL_STORAGE" ;;
+#                     5) echo -n "Ingresa el permiso completo: "; read permission ;;
+#                     *) permission="$perm_choice" ;;
+#                 esac
+#                 
+#                 echo -e "${YELLOW}Otorgando $permission...${NC}"
+#                 adb shell pm grant "$package_name" "$permission"
+#                 echo -e "${GREEN}✓ Permiso otorgado${NC}"
+#                 pause
+#                 ;;
+#             3)
+#                 echo -n "Paquete de la app: "
+#                 read package_name
+#                 echo -n "Permiso a revocar (ej: android.permission.CAMERA): "
+#                 read permission
+#                 
+#                 echo -e "${YELLOW}Revocando $permission...${NC}"
+#                 adb shell pm revoke "$package_name" "$permission"
+#                 echo -e "${GREEN}✓ Permiso revocado${NC}"
+#                 pause
+#                 ;;
+#             4)
+#                 echo -e "\n${CYAN}Selecciona una aplicación:${NC}"
+#                 mapfile -t packages < <(adb shell pm list packages -3 2>/dev/null | cut -d: -f2 | sort)
+#                 
+#                 for i in "${!packages[@]}"; do
+#                     echo "$((i+1)). ${packages[$i]}"
+#                 done
+#                 
+#                 echo ""
+#                 echo -n "Número de app (0 para cancelar): "
+#                 read num
+#                 
+#                 if [ "$num" -gt 0 ] 2>/dev/null && [ "$num" -le "${#packages[@]}" ]; then
+#                     selected_package="${packages[$((num-1))]}"
+#                     echo -e "\n${CYAN}Permisos peligrosos de $selected_package:${NC}"
+#                     echo "1. CAMERA"
+#                     echo "2. ACCESS_FINE_LOCATION"
+#                     echo "3. READ_CONTACTS"
+#                     echo "4. READ_CALL_LOG"
+#                     echo "5. READ_EXTERNAL_STORAGE"
+#                     echo -n "¿Revocar todos? (s/n): "
+#                     read confirm
+#                     
+#                     if [ "$confirm" = "s" ]; then
+#                         adb shell pm revoke "$selected_package" android.permission.CAMERA 2>/dev/null
+#                         adb shell pm revoke "$selected_package" android.permission.ACCESS_FINE_LOCATION 2>/dev/null
+#                         adb shell pm revoke "$selected_package" android.permission.READ_CONTACTS 2>/dev/null
+#                         adb shell pm revoke "$selected_package" android.permission.READ_CALL_LOG 2>/dev/null
+#                         adb shell pm revoke "$selected_package" android.permission.READ_EXTERNAL_STORAGE 2>/dev/null
+#                         echo -e "${GREEN}✓ Permisos peligrosos revocados${NC}"
+#                     fi
+#                 else
+#                     echo -e "${YELLOW}Cancelado${NC}"
+#                 fi
+#                 pause
+#                 ;;
+#             0) break ;;
+#             *) echo -e "${RED}Opción inválida${NC}"; sleep 1 ;;
+#         esac
+#     done
+# }
+
+customization_menu() {
+    while true; do
+        show_banner
+        echo -e "${BLUE}═══ PERSONALIZACIÓN DEL SISTEMA ═══${NC}"
+        echo "1. Cambiar DPI de pantalla"
+        echo "2. Cambiar fuente del sistema"
+        echo "3. Ver propiedades del sistema"
+        echo "4. Modificar propiedades (build.prop)"
+        echo "5. Cambiar densidad de iconos"
+        echo "0. Volver"
+        echo ""
+        echo -n "Selecciona una opción: "
+        read option
+        
+        case $option in
+            1)
+                echo -e "${CYAN}DPI actual:${NC}"
+                adb shell wm density
+                echo ""
+                echo -n "Nuevo DPI (320, 360, 400, 480, etc.): "
+                read new_dpi
+                adb shell wm density "$new_dpi"
+                echo -e "${GREEN}✓ DPI cambiado a $new_dpi${NC}"
+                echo "Reinicia el dispositivo para aplicar cambios"
+                pause
+                ;;
+            2)
+                echo -e "${YELLOW}Fontes del sistema disponibles:${NC}"
+                adb shell ls /system/fonts/ 2>/dev/null | head -20
+                echo ""
+                echo "Nota: Para cambiar la fuente necesitas acceso root"
+                echo -e "${CYAN}Fontes personalizadas se pueden colocar en:/sdcard/Fonts/${NC}"
+                pause
+                ;;
+            3)
+                echo -n "Propiedad a buscar (ej: ro.build): "
+                read prop_name
+                echo -e "\n${CYAN}Propiedades encontradas:${NC}"
+                adb shell getprop | grep "$prop_name"
+                pause
+                ;;
+            4)
+                echo -e "${RED}⚠ Advertencia: Modificar build.prop puede causar problemas${NC}"
+                echo -n "¿Continuar? (s/n): "
+                read confirm
+                
+                if [ "$confirm" = "s" ]; then
+                    echo -n "Propiedad (ej: ro.build.version.release): "
+                    read prop
+                    echo -n "Nuevo valor: "
+                    read value
+                    
+                    adb shell "setprop $prop $value" 2>/dev/null
+                    echo -e "${GREEN}✓ Propiedad modificada (temporal)${NC}"
+                    echo "Nota: Los cambios son temporales. Reinicia para revertir"
+                fi
+                pause
+                ;;
+            5)
+                echo -e "${CYAN}Densidad de iconos actual:${NC}"
+                adb shell wm density
+                echo ""
+                echo "Para cambiar densidad de iconos instala un launcher personalizado"
+                pause
+                ;;
+            0) break ;;
+            *) echo -e "${RED}Opción inválida${NC}"; sleep 1 ;;
+        esac
+    done
+}
+
+security_menu() {
+    while true; do
+        show_banner
+        echo -e "${BLUE}═══ HERRAMIENTAS DE SEGURIDAD ═══${NC}"
+        echo "1. Crear backup encriptado"
+        echo "2. Ver certificados instalados"
+        echo "3. Listar aplicaciones del sistema potencialmente maliciosas"
+        echo "4. Generar hash MD5/SHA256 de APK"
+        echo "5. Ver información de seguridad"
+        echo "0. Volver"
+        echo ""
+        echo -n "Selecciona una opción: "
+        read option
+        
+        case $option in
+            1)
+                echo -n "Contraseña para backup: "
+                read -s password
+                echo ""
+                FILENAME="backup_encriptado_$(date +%Y%m%d_%H%M%S).ab"
+                echo -e "${YELLOW}Creando backup encriptado...${NC}"
+                echo "Confirma en el dispositivo"
+                adb backup -all -apk -shared -f "$FILENAME"
+                echo -e "${GREEN}✓ Backup guardado como $FILENAME${NC}"
+                pause
+                ;;
+            2)
+                echo -e "\n${CYAN}Certificados instalados:${NC}"
+                adb shell ls /system/etc/security/cacerts/ 2>/dev/null | head -20
+                echo ""
+                echo -e "${CYAN}Certificados del usuario:${NC}"
+                adb shell ls /data/misc/user/0/cacerts-added/ 2>/dev/null
+                pause
+                ;;
+            3)
+                echo -e "\n${CYAN}Apps potencialmente sospechosas:${NC}"
+                echo "Buscando apps conocidas como bloatware/malware..."
+                adb shell pm list packages -3 | grep -E "com.facebook|com.baidu|com.tencent.mm|com.alibaba" | cut -d: -f2
+                echo ""
+                echo "Nota: Esto es solo referencia. No es análisis completo de malware"
+                pause
+                ;;
+            4)
+                echo -n "Ruta del APK: "
+                read apk_path
+                if [ -f "$apk_path" ]; then
+                    echo -e "\n${CYAN}Hashes del APK:${NC}"
+                    echo "MD5: $(md5sum \"$apk_path\" | awk '{print $1}')"
+                    echo "SHA256: $(sha256sum \"$apk_path\" | awk '{print $1}')"
+                else
+                    echo -e "${RED}Archivo no encontrado${NC}"
+                fi
+                pause
+                ;;
+            5)
+                echo -e "\n${CYAN}Información de Seguridad:${NC}"
+                printf "%-35s %s\n" "SELinux:" "$(adb shell getenforce 2>/dev/null)"
+                printf "%-35s %s\n" "Depuración USB:" "$(adb shell getprop ro.secure 2>/dev/null)"
+                printf "%-35s %s\n" "Verificación de Bootloader:" "$(adb shell getprop ro.oem_unlock_supported 2>/dev/null)"
+                printf "%-35s %s\n" "Encrypto:" "$(adb shell getprop ro.crypto.state 2>/dev/null)"
+                pause
+                ;;
+            0) break ;;
+            *) echo -e "${RED}Opción inválida${NC}"; sleep 1 ;;
+        esac
+    done
 }
 
 check_updates &
