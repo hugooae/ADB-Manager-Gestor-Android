@@ -1,5 +1,5 @@
 #!/bin/bash
-#V1.2.1
+#V1.3.0
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -34,14 +34,13 @@ check_adb_connection() {
         echo "Instala con: sudo apt install android-tools-adb"
         exit 1
     fi
-    
+
     DEVICE=$(adb devices | grep -w "device" | awk '{print $1}')
     if [ -z "$DEVICE" ]; then
         echo -e "${RED}ERROR: No hay dispositivos conectados${NC}"
         echo "Conecta tu dispositivo y activa la depuración USB"
         exit 1
     fi
-    echo -e "${GREEN}✓ Dispositivo conectado: $DEVICE${NC}"
 }
 
 setup_device_folder() {
@@ -49,7 +48,7 @@ setup_device_folder() {
     DEVICE_SERIAL=$(adb shell getprop ro.serialno 2>/dev/null | tr -d '\r')
     DEVICE_NAME="${DEVICE_MODEL}_${DEVICE_SERIAL}"
     DEVICE_FOLDER="$PWD/dispositivos/$DEVICE_NAME"
-    
+
     mkdir -p "$DEVICE_FOLDER"
     mkdir -p "$DEVICE_FOLDER/backups"
     mkdir -p "$DEVICE_FOLDER/apks"
@@ -57,22 +56,227 @@ setup_device_folder() {
     mkdir -p "$DEVICE_FOLDER/logs"
     mkdir -p "$DEVICE_FOLDER/reportes"
     mkdir -p "$DEVICE_FOLDER/descargas"
-    
-    echo -e "${GREEN}✓ Carpeta de dispositivo: $DEVICE_FOLDER${NC}"
+
+    DEVICE_MANUFACTURER=$(adb shell getprop ro.product.manufacturer 2>/dev/null | tr -d '\r')
+
+    echo -e "${GREEN}✓ Dispositivo conectado: $DEVICE_MANUFACTURER $DEVICE_MODEL${NC}"
+}
+
+warranty_menu() {
+    while true; do
+        show_banner
+        echo -e "${BLUE}═══ CONSULTA DE GARANTÍA ═══${NC}"
+        echo ""
+        echo "Selecciona la marca de tu dispositivo:"
+        echo ""
+        echo "1. Honor"
+        echo "2. Lenovo"
+        echo "3. Huawei"
+        echo "4. Samsung"
+        echo "5. Xiaomi"
+        echo "6. OnePlus"
+        echo "7. Motorola"
+        echo "8. OPPO"
+        echo "9. Vivo"
+        echo "10. ASUS"
+        echo "11. Nokia"
+        echo "12. Google Pixel"
+        echo "0. Volver"
+        echo ""
+        echo -n "Selecciona una opción: "
+        read warranty_option
+
+        if [ "$warranty_option" != "0" ] && [ "$warranty_option" -ge 1 ] 2>/dev/null && [ "$warranty_option" -le 12 ] 2>/dev/null; then
+            MANUFACTURER=$(adb shell getprop ro.product.manufacturer 2>/dev/null | tr -d '\r')
+            SERIAL=$(adb shell getprop ro.serialno 2>/dev/null | tr -d '\r')
+            MODEL=$(adb shell getprop ro.product.model 2>/dev/null | tr -d '\r')
+            IMEI=$(adb shell service call iphonesubinfo 1 2>/dev/null | grep -oE '[0-9]{15}' | head -1)
+            
+            if [ -z "$IMEI" ]; then
+                IMEI=$(adb shell dumpsys telephony.registry 2>/dev/null | grep mImei | head -1 | grep -oE '[0-9]{15}')
+            fi
+            
+            if [ -z "$IMEI" ]; then
+                IMEI="N/A"
+            fi
+        fi
+
+        case $warranty_option in
+            1)
+                echo -e "\n${CYAN}═══ Honor - Consulta de Garantía ═══${NC}"
+                echo ""
+                echo -e "${YELLOW}Número de Serie del Dispositivo:${NC}"
+                echo -e "${GREEN}$SERIAL${NC}"
+                echo ""
+                echo -e "${YELLOW}IMEI del Dispositivo:${NC}"
+                echo -e "${GREEN}$IMEI${NC}"
+                echo ""
+                echo -e "${YELLOW}Abre este enlace en tu navegador:${NC}"
+                echo -e "${BLUE}https://www.honor.com/es/support/warranty-query/${NC}"
+                echo ""
+                ;;
+            2)
+                echo -e "\n${CYAN}═══ Lenovo - Consulta de Garantía ═══${NC}"
+                echo ""
+                echo -e "${YELLOW}Número de Serie del Dispositivo:${NC}"
+                echo -e "${GREEN}$SERIAL${NC}"
+                echo ""
+                echo -e "${YELLOW}IMEI del Dispositivo:${NC}"
+                echo -e "${GREEN}$IMEI${NC}"
+                echo ""
+                echo -e "${YELLOW}Abre este enlace en tu navegador:${NC}"
+                echo -e "${BLUE}https://support.lenovo.com/es/es/warranty-lookup#/${NC}"
+                echo ""
+                ;;
+            3)
+                echo -e "\n${CYAN}═══ Huawei - Consulta de Garantía ═══${NC}"
+                echo ""
+                echo -e "${YELLOW}Número de Serie del Dispositivo:${NC}"
+                echo -e "${GREEN}$SERIAL${NC}"
+                echo ""
+                echo -e "${YELLOW}IMEI del Dispositivo:${NC}"
+                echo -e "${GREEN}$IMEI${NC}"
+                echo ""
+                echo -e "${YELLOW}Abre este enlace en tu navegador:${NC}"
+                echo -e "${BLUE}https://consumer.huawei.com/es/support/warranty-query/${NC}"
+                echo ""
+                ;;
+            4)
+                echo -e "\n${CYAN}═══ Samsung - Consulta de Garantía ═══${NC}"
+                echo ""
+                echo -e "${YELLOW}Número de Serie del Dispositivo:${NC}"
+                echo -e "${GREEN}$SERIAL${NC}"
+                echo ""
+                echo -e "${YELLOW}IMEI del Dispositivo:${NC}"
+                echo -e "${GREEN}$IMEI${NC}"
+                echo ""
+                echo -e "${YELLOW}Abre este enlace en tu navegador:${NC}"
+                echo -e "${BLUE}https://www.samsung.com/es/support/${NC}"
+                echo ""
+                ;;
+            5)
+                echo -e "\n${CYAN}═══ Xiaomi - Consulta de Garantía ═══${NC}"
+                echo ""
+                echo -e "${YELLOW}Número de Serie del Dispositivo:${NC}"
+                echo -e "${GREEN}$SERIAL${NC}"
+                echo ""
+                echo -e "${YELLOW}IMEI del Dispositivo:${NC}"
+                echo -e "${GREEN}$IMEI${NC}"
+                echo ""
+                echo -e "${YELLOW}Abre este enlace en tu navegador:${NC}"
+                echo -e "${BLUE}https://www.mi.com/global/verify/#/en/tab/imei/${NC}"
+                echo ""
+                ;;
+            6)
+                echo -e "\n${CYAN}═══ OnePlus - Consulta de Garantía ═══${NC}"
+                echo ""
+                echo -e "${YELLOW}Número de Serie del Dispositivo:${NC}"
+                echo -e "${GREEN}$SERIAL${NC}"
+                echo ""
+                echo -e "${YELLOW}IMEI del Dispositivo:${NC}"
+                echo -e "${GREEN}$IMEI${NC}"
+                echo ""
+                echo -e "${YELLOW}Abre este enlace en tu navegador:${NC}"
+                echo -e "${BLUE}https://service.oneplus.com/es/warranty-check/${NC}"
+                echo ""
+                ;;
+            7)
+                echo -e "\n${CYAN}═══ Motorola - Consulta de Garantía ═══${NC}"
+                echo ""
+                echo -e "${YELLOW}Número de Serie del Dispositivo:${NC}"
+                echo -e "${GREEN}$SERIAL${NC}"
+                echo ""
+                echo -e "${YELLOW}IMEI del Dispositivo:${NC}"
+                echo -e "${GREEN}$IMEI${NC}"
+                echo ""
+                echo -e "${YELLOW}Abre este enlace en tu navegador:${NC}"
+                echo -e "${BLUE}https://es-es.support.motorola.com/app/warranty/check/${NC}"
+                echo ""
+                ;;
+            8)
+                echo -e "\n${CYAN}═══ OPPO - Consulta de Garantía ═══${NC}"
+                echo ""
+                echo -e "${YELLOW}Número de Serie del Dispositivo:${NC}"
+                echo -e "${GREEN}$SERIAL${NC}"
+                echo ""
+                echo -e "${YELLOW}IMEI del Dispositivo:${NC}"
+                echo -e "${GREEN}$IMEI${NC}"
+                echo ""
+                echo -e "${YELLOW}Abre este enlace en tu navegador:${NC}"
+                echo -e "${BLUE}https://support.oppo.com/en/warranty-check/${NC}"
+                echo ""
+                ;;
+            9)
+                echo -e "\n${CYAN}═══ Vivo - Consulta de Garantía ═══${NC}"
+                echo ""
+                echo -e "${YELLOW}Número de Serie del Dispositivo:${NC}"
+                echo -e "${GREEN}$SERIAL${NC}"
+                echo ""
+                echo -e "${YELLOW}IMEI del Dispositivo:${NC}"
+                echo -e "${GREEN}$IMEI${NC}"
+                echo ""
+                echo -e "${YELLOW}Abre este enlace en tu navegador:${NC}"
+                echo -e "${BLUE}https://www.vivo.com/es/support/IMEI/${NC}"
+                echo ""
+                ;;
+            10)
+                echo -e "\n${CYAN}═══ ASUS - Consulta de Garantía ═══${NC}"
+                echo ""
+                echo -e "${YELLOW}Número de Serie del Dispositivo:${NC}"
+                echo -e "${GREEN}$SERIAL${NC}"
+                echo ""
+                echo -e "${YELLOW}IMEI del Dispositivo:${NC}"
+                echo -e "${GREEN}$IMEI${NC}"
+                echo ""
+                echo -e "${YELLOW}Abre este enlace en tu navegador:${NC}"
+                echo -e "${BLUE}https://www.asus.com/support/warranty-status-inquiry/${NC}"
+                echo ""
+                ;;
+            11)
+                echo -e "\n${CYAN}═══ Nokia - Consulta de Garantía ═══${NC}"
+                echo ""
+                echo -e "${YELLOW}Número de Serie del Dispositivo:${NC}"
+                echo -e "${GREEN}$SERIAL${NC}"
+                echo ""
+                echo -e "${YELLOW}IMEI del Dispositivo:${NC}"
+                echo -e "${GREEN}$IMEI${NC}"
+                echo ""
+                echo -e "${YELLOW}Abre este enlace en tu navegador:${NC}"
+                echo -e "${BLUE}https://customer.nokia.com/support/s/productwarrantyresults/${NC}"
+                echo ""
+                ;;
+            12)
+                echo -e "\n${CYAN}═══ Google Pixel - Consulta de Garantía ═══${NC}"
+                echo ""
+                echo -e "${YELLOW}Número de Serie del Dispositivo:${NC}"
+                echo -e "${GREEN}$SERIAL${NC}"
+                echo ""
+                echo -e "${YELLOW}IMEI del Dispositivo:${NC}"
+                echo -e "${GREEN}$IMEI${NC}"
+                echo ""
+                echo -e "${YELLOW}Abre este enlace en tu navegador:${NC}"
+                echo -e "${BLUE}https://support.google.com/pixelphone/answer/6160400?hl=es/${NC}"
+                echo ""
+                ;;
+            0) break ;;
+            *) echo -e "${RED}Opción inválida${NC}"; sleep 1 ;;
+        esac
+        pause
+    done
 }
 
 check_updates() {
     local REPO_URL="https://raw.githubusercontent.com/hugooae/ADB-Manager-Gestor-Android/main/adb_manager.sh"
     local CURRENT_VERSION=$(sed -n '2p' "$0" | grep -oP '(?<=#V)[0-9.]+' || echo "unknown")
-    
+
     local REMOTE_SCRIPT=$(curl -s "$REPO_URL" 2>/dev/null)
-    
+
     if [ -z "$REMOTE_SCRIPT" ]; then
         return
     fi
-    
+
     local REMOTE_VERSION=$(echo "$REMOTE_SCRIPT" | sed -n '2p' | grep -oP '(?<=#V)[0-9.]+' || echo "unknown")
-    
+
     if [ "$REMOTE_VERSION" != "$CURRENT_VERSION" ]; then
         export UPDATE_AVAILABLE=true
         export REMOTE_VERSION="$REMOTE_VERSION"
@@ -103,18 +307,18 @@ show_update_dialog() {
         echo ""
         echo -n "Selecciona una opción: "
         read option
-        
+
         case $option in
             1)
                 echo -e "${YELLOW}Descargando actualización...${NC}"
-                
+
                 local BACKUP_FILE="$0.backup.v$CURRENT_VERSION"
                 cp "$0" "$BACKUP_FILE"
                 echo -e "${GREEN}Backup creado: $BACKUP_FILE${NC}"
-                
+
                 echo "$REMOTE_SCRIPT" > "$0"
                 chmod +x "$0"
-                
+
                 echo -e "${GREEN}Actualización completada exitosamente${NC}"
                 echo -e "${GREEN}Versión: v$CURRENT_VERSION -> v$REMOTE_VERSION${NC}"
                 echo ""
@@ -138,9 +342,16 @@ show_banner() {
     clear_screen
     echo -e "${CYAN}"
     CURRENT_VERSION=$(sed -n '2p' "$0" | grep -oP '(?<=#V)[0-9.]+' || echo "unknown")
-    echo "╔═══════════════════════════════════════════════════════════════╗"
-    echo "║          ADB MANAGER - Gestor Android                         ║"
-    echo "╚═══════════════════════════════════════════════════════════════╝"
+    echo ""
+    echo "▄████▄ ████▄  █████▄   ██▄  ▄██ ▄████▄ ███  ██ ▄████▄  ▄████  ██████ █████▄      "
+    echo "██▄▄██ ██  ██ ██▄▄██   ██ ▀▀ ██ ██▄▄██ ██ ▀▄██ ██▄▄██ ██  ▄▄▄ ██▄▄   ██▄▄██▄     "
+    echo "██  ██ ████▀  ██▄▄█▀   ██    ██ ██  ██ ██   ██ ██  ██  ▀███▀  ██▄▄▄▄ ██   ██     "
+    echo ""
+    echo ""
+    echo " ▄████  ▄▄▄▄▄  ▄▄▄▄ ▄▄▄▄▄▄ ▄▄▄  ▄▄▄▄    ▄████▄ ▄▄  ▄▄ ▄▄▄▄  ▄▄▄▄   ▄▄▄  ▄▄ ▄▄▄▄    ██  ██ ▄██   ████▄   ▄██▄  "
+    echo "██  ▄▄▄ ██▄▄  ███▄▄   ██  ██▀██ ██▄█▄   ██▄▄██ ███▄██ ██▀██ ██▄█▄ ██▀██ ██ ██▀██   ██▄▄██  ██    ▄▄██  ██  ██ "
+    echo " ▀███▀  ██▄▄▄ ▄▄██▀   ██  ▀███▀ ██ ██   ██  ██ ██ ▀██ ████▀ ██ ██ ▀███▀ ██ ████▀    ▀██▀   ██ ▄ ▄▄▄█▀ ▄ ▀██▀  "
+    echo ""
     echo "v$CURRENT_VERSION"
     echo "Repositorio: https://github.com/hugooae/ADB-Manager-Gestor-Android"
     echo -e "${NC}"
@@ -154,36 +365,51 @@ main_menu() {
     while true; do
         show_banner
         echo -e "${BLUE}═══ MENÚ PRINCIPAL ═══${NC}"
+        echo ""
+        echo -e "${MAGENTA}INFORMACIÓN Y DISPOSITIVO${NC}"
         echo "1. Información del Dispositivo"
-        echo "2. Gestión de Aplicaciones"
-        echo "3. Gestión de Archivos"
-        echo "4. Capturas y Grabación"
-        echo "5. Herramientas Avanzadas"
-        echo "6. Red y Conectividad"
-        echo "7. Logs y Monitoreo"
-        echo "8. Control del Dispositivo"
-        echo "9. Backup y Restauración"
-        echo "10. Personalización del Sistema"
-        echo "11. Herramientas de Seguridad"
-        echo "12. Generar Reporte del Dispositivo Conectado"
+        echo "2. Consulta de Garantía"
+        echo "3. Generar Reporte del Dispositivo Conectado"
+        echo ""
+        echo -e "${MAGENTA}APLICACIONES Y ARCHIVOS${NC}"
+        echo "4. Gestión de Aplicaciones"
+        echo "5. Gestión de Archivos"
+        echo "6. Backup y Restauración"
+        echo ""
+        echo -e "${MAGENTA}CAPTURA Y VISUALIZACIÓN${NC}"
+        echo "7. Capturas y Grabación"
+        echo "8. Espejo de Pantalla (Scrcpy)"
+        echo ""
+        echo -e "${MAGENTA}SISTEMA Y CONECTIVIDAD${NC}"
+        echo "9. Red y Conectividad"
+        echo "10. Logs y Monitoreo"
+        echo "11. Control del Dispositivo"
+        echo ""
+        echo -e "${MAGENTA}CONFIGURACIÓN Y HERRAMIENTAS${NC}"
+        echo "12. Personalización del Sistema"
+        echo "13. Herramientas de Seguridad"
+        echo "14. Herramientas Avanzadas"
+        echo ""
         echo "0. Salir"
         echo ""
         echo -n "Selecciona una opción: "
         read option
-        
+
         case $option in
             1) device_info_menu ;;
-            2) apps_menu ;;
-            3) files_menu ;;
-            4) capture_menu ;;
-            5) advanced_menu ;;
-            6) network_menu ;;
-            7) logs_menu ;;
-            8) control_menu ;;
-            9) backup_menu ;;
-            10) customization_menu ;;
-            11) security_menu ;;
-            12) generate_report_menu ;;
+            2) warranty_menu ;;
+            3) generate_report_menu ;;
+            4) apps_menu ;;
+            5) files_menu ;;
+            6) backup_menu ;;
+            7) capture_menu ;;
+            8) scrcpy_menu ;;
+            9) network_menu ;;
+            10) logs_menu ;;
+            11) control_menu ;;
+            12) customization_menu ;;
+            13) security_menu ;;
+            14) advanced_menu ;;
             0) echo -e "${GREEN}¡Hasta luego!${NC}"; exit 0 ;;
             *) echo -e "${RED}Opción inválida${NC}"; sleep 1 ;;
         esac
@@ -197,18 +423,19 @@ device_info_menu() {
         echo "1. Ver información general"
         echo "2. Ver modelo y fabricante"
         echo "3. Ver versión de Android"
-        echo "4. Ver estado de batería"
-        echo "5. Ver información de CPU"
-        echo "6. Ver uso de memoria RAM"
-        echo "7. Ver almacenamiento"
-        echo "8. Ver temperatura"
+        echo "4. Ver número de serie e IMEI"
+        echo "5. Ver estado de batería"
+        echo "6. Ver información de CPU"
+        echo "7. Ver uso de memoria RAM"
+        echo "8. Ver almacenamiento"
+        echo "9. Ver temperatura"
         echo "0. Volver"
         echo ""
         echo -n "Selecciona una opción: "
         read option
-        
+
         case $option in
-            1) 
+            1)
                 echo -e "\n${CYAN}Información General:${NC}"
                 adb shell getprop | grep -E "ro.product|ro.build.version"
                 pause
@@ -226,8 +453,30 @@ device_info_menu() {
                 pause
                 ;;
             4)
+                echo -e "\n${CYAN}Número de Serie e IMEI:${NC}"
+                echo ""
+                MANUFACTURER=$(adb shell getprop ro.product.manufacturer 2>/dev/null | tr -d '\r')
+                SERIAL=$(adb shell getprop ro.serialno 2>/dev/null | tr -d '\r')
+                MODEL=$(adb shell getprop ro.product.model 2>/dev/null | tr -d '\r')
+                IMEI=$(adb shell service call iphonesubinfo 1 2>/dev/null | grep -oE '[0-9]{15}' | head -1)
+                
+                if [ -z "$IMEI" ]; then
+                    IMEI=$(adb shell dumpsys telephony.registry 2>/dev/null | grep mImei | head -1 | grep -oE '[0-9]{15}')
+                fi
+                
+                if [ -z "$IMEI" ]; then
+                    IMEI="N/A"
+                fi
+                
+                printf "%-35s %s\n" "Fabricante:" "$MANUFACTURER"
+                printf "%-35s %s\n" "Modelo:" "$MODEL"
+                printf "%-35s %s\n" "Número de Serie:" "$SERIAL"
+                printf "%-35s %s\n" "IMEI:" "$IMEI"
+                pause
+                ;;
+            5)
             echo -e "\n${CYAN}Estado de Batería:${NC}"
-            
+
             battery_info=$(adb shell dumpsys battery)
             echo "$battery_info"
 
@@ -310,7 +559,7 @@ apps_menu() {
         echo ""
         echo -n "Selecciona una opción: "
         read option
-        
+
         case $option in
             1)
                 echo -e "\n${CYAN}Todas las aplicaciones:${NC}"
@@ -346,13 +595,13 @@ apps_menu() {
                 echo "0. Cancelar"
                 echo -n "Selecciona una opción: "
                 read app_type
-                
+
                 if [ "$app_type" = "0" ]; then
                     echo -e "${YELLOW}Cancelado${NC}"
                     pause
                     continue
                 fi
-                
+
                 if [ "$app_type" = "1" ]; then
                     echo -e "\n${CYAN}Apps de terceros:${NC}"
                     mapfile -t packages < <(adb shell pm list packages -3 2>/dev/null | cut -d: -f2 | sort)
@@ -367,40 +616,112 @@ apps_menu() {
                     pause
                     continue
                 fi
-                
+
                 if [ ${#packages[@]} -eq 0 ]; then
                     echo -e "${RED}No hay aplicaciones de $app_source disponibles${NC}"
                     pause
                     continue
                 fi
-                
+
                 for i in "${!packages[@]}"; do
                     echo "$((i+1)). ${packages[$i]}"
                 done
-                
+
                 echo ""
-                echo -n "Número de app a desinstalar (0 para cancelar): "
-                read num
-                
-                if [ "$num" -gt 0 ] 2>/dev/null && [ "$num" -le "${#packages[@]}" ]; then
-                    selected_package="${packages[$((num-1))]}"
-                    echo -e "${RED}¿Desinstalar $selected_package? (s/n): ${NC}"
-                    read confirm
-                    if [ "$confirm" = "s" ]; then
-                        echo -e "${YELLOW}Desinstalando...${NC}"
-                        
+                echo -n "Números/rangos de apps (ej: 1 2 3 20-74 98 154-176, o 0 para cancelar): "
+                read app_numbers
+
+                if [ "$app_numbers" = "0" ]; then
+                    echo -e "${YELLOW}Cancelado${NC}"
+                    pause
+                    continue
+                fi
+
+
+                selected_apps=()
+                invalid_found=false
+
+                for item in $app_numbers; do
+                    if [[ "$item" == *"-"* ]]; then
+
+                        start=$(echo "$item" | cut -d- -f1)
+                        end=$(echo "$item" | cut -d- -f2)
+
+                        if [ "$start" -gt 0 ] 2>/dev/null && [ "$end" -gt 0 ] 2>/dev/null && [ "$start" -le "$end" ] 2>/dev/null; then
+                            if [ "$end" -gt "${#packages[@]}" ]; then
+                                end="${#packages[@]}"
+                                echo -e "${YELLOW}⚠ Rango ajustado: $start-$end (máximo disponible)${NC}"
+                            fi
+                            for ((i=start; i<=end; i++)); do
+                                if [ "$i" -le "${#packages[@]}" ]; then
+                                    selected_apps+=("${packages[$((i-1))]}")
+                                fi
+                            done
+                        else
+                            echo -e "${RED}✗ Rango inválido: $item${NC}"
+                            invalid_found=true
+                        fi
+                    else
+
+                        if [ "$item" -gt 0 ] 2>/dev/null && [ "$item" -le "${#packages[@]}" ]; then
+                            selected_apps+=("${packages[$((item-1))]}")
+                        else
+                            if [ ! -z "$item" ]; then
+                                echo -e "${RED}✗ Número inválido: $item${NC}"
+                                invalid_found=true
+                            fi
+                        fi
+                    fi
+                done
+
+                if [ ${#selected_apps[@]} -eq 0 ]; then
+                    echo -e "${RED}No se seleccionaron apps válidas${NC}"
+                    pause
+                    continue
+                fi
+
+                selected_apps=($(printf '%s\n' "${selected_apps[@]}" | sort -u))
+
+                if [ "$invalid_found" = true ]; then
+                    echo -e "${YELLOW}Solo se procesarán las selecciones válidas${NC}"
+                fi
+
+                echo ""
+                echo -e "${CYAN}Apps a desinstalar:${NC}"
+                for app in "${selected_apps[@]}"; do
+                    echo "  • $app"
+                done
+
+                echo ""
+                echo -e "${RED}¿Desinstalar estas ${#selected_apps[@]} aplicación(es)? (s/n): ${NC}"
+                read confirm
+
+                if [ "$confirm" = "s" ]; then
+                    uninstalled=0
+                    failed=0
+
+                    for selected_package in "${selected_apps[@]}"; do
+                        echo -e "${YELLOW}Desinstalando $selected_package...${NC}"
+
                         if [ "$app_source" = "terceros" ]; then
                             result=$(adb uninstall "$selected_package" 2>&1)
                         else
                             result=$(adb shell pm uninstall --user 0 "$selected_package" 2>&1)
                         fi
-                        
+
                         if echo "$result" | grep -q "Success"; then
-                            echo -e "${GREEN}✓ Desinstalación completada${NC}"
+                            echo -e "${GREEN}✓ $selected_package desinstalada${NC}"
+                            ((uninstalled++))
                         else
-                            echo -e "${RED}✗ Error al desinstalar:${NC}"
-                            echo "$result"
+                            echo -e "${RED}✗ Error al desinstalar $selected_package${NC}"
+                            ((failed++))
                         fi
+                    done
+
+                    echo ""
+                    echo -e "${GREEN}Resumen: ${uninstalled} desinstaladas${NC}"
+                    if [ $failed -gt 0 ]; then
+                        echo -e "${RED}Errores: ${failed}${NC}"
                     fi
                 else
                     echo -e "${YELLOW}Cancelado${NC}"
@@ -410,15 +731,15 @@ apps_menu() {
             6)
                 echo -e "\n${CYAN}Selecciona una aplicación:${NC}"
                 mapfile -t packages < <(adb shell pm list packages -3 2>/dev/null | cut -d: -f2 | sort)
-                
+
                 for i in "${!packages[@]}"; do
                     echo "$((i+1)). ${packages[$i]}"
                 done
-                
+
                 echo ""
                 echo -n "Número de app (0 para cancelar): "
                 read num
-                
+
                 if [ "$num" -gt 0 ] 2>/dev/null && [ "$num" -le "${#packages[@]}" ]; then
                     selected_package="${packages[$((num-1))]}"
                     echo -e "\n${CYAN}Información de $selected_package:${NC}"
@@ -431,22 +752,39 @@ apps_menu() {
             7)
                 echo -e "\n${CYAN}Selecciona una aplicación:${NC}"
                 mapfile -t packages < <(adb shell pm list packages -3 2>/dev/null | cut -d: -f2 | sort)
-                
+
                 for i in "${!packages[@]}"; do
                     echo "$((i+1)). ${packages[$i]}"
                 done
-                
+
                 echo ""
                 echo -n "Número de app (0 para cancelar): "
                 read num
-                
+
                 if [ "$num" -gt 0 ] 2>/dev/null && [ "$num" -le "${#packages[@]}" ]; then
                     selected_package="${packages[$((num-1))]}"
-                    APK_PATH=$(adb shell pm path "$selected_package" 2>/dev/null | cut -d: -f2 | tr -d '\r')
-                    if [ ! -z "$APK_PATH" ]; then
+                    APK_PATHS=$(adb shell pm path "$selected_package" 2>/dev/null | cut -d: -f2 | tr -d '\r')
+                    
+                    if [ ! -z "$APK_PATHS" ]; then
                         echo -e "${YELLOW}Extrayendo APK...${NC}"
-                        adb pull "$APK_PATH" "${selected_package}.apk"
-                        echo -e "${GREEN}APK guardado como ${selected_package}.apk${NC}"
+                        
+                        mkdir -p "$DEVICE_FOLDER/apks/${selected_package}"
+                        
+                        local apk_count=0
+                        while IFS= read -r apk_path; do
+                            if [ ! -z "$apk_path" ]; then
+                                local apk_filename=$(basename "$apk_path")
+                                adb pull "$apk_path" "$DEVICE_FOLDER/apks/${selected_package}/$apk_filename" 2>/dev/null
+                                ((apk_count++))
+                            fi
+                        done <<< "$APK_PATHS"
+                        
+                        if [ $apk_count -gt 0 ]; then
+                            echo -e "${GREEN}✓ ${apk_count} archivo(s) APK extraído(s)${NC}"
+                            echo -e "${CYAN}Ubicación: $DEVICE_FOLDER/apks/${selected_package}/${NC}"
+                        else
+                            echo -e "${RED}No se pudo extraer los APKs${NC}"
+                        fi
                     else
                         echo -e "${RED}No se pudo obtener la ruta del APK${NC}"
                     fi
@@ -458,15 +796,15 @@ apps_menu() {
             8)
                 echo -e "\n${CYAN}Selecciona una aplicación:${NC}"
                 mapfile -t packages < <(adb shell pm list packages -3 2>/dev/null | cut -d: -f2 | sort)
-                
+
                 for i in "${!packages[@]}"; do
                     echo "$((i+1)). ${packages[$i]}"
                 done
-                
+
                 echo ""
                 echo -n "Número de app (0 para cancelar): "
                 read num
-                
+
                 if [ "$num" -gt 0 ] 2>/dev/null && [ "$num" -le "${#packages[@]}" ]; then
                     selected_package="${packages[$((num-1))]}"
                     echo -e "${YELLOW}Limpiando caché de $selected_package...${NC}"
@@ -480,15 +818,15 @@ apps_menu() {
             9)
                 echo -e "\n${CYAN}Selecciona una aplicación:${NC}"
                 mapfile -t packages < <(adb shell pm list packages -3 2>/dev/null | cut -d: -f2 | sort)
-                
+
                 for i in "${!packages[@]}"; do
                     echo "$((i+1)). ${packages[$i]}"
                 done
-                
+
                 echo ""
                 echo -n "Número de app (0 para cancelar): "
                 read num
-                
+
                 if [ "$num" -gt 0 ] 2>/dev/null && [ "$num" -le "${#packages[@]}" ]; then
                     selected_package="${packages[$((num-1))]}"
                     echo -e "${YELLOW}Deteniendo $selected_package...${NC}"
@@ -518,7 +856,7 @@ files_menu() {
         echo ""
         echo -n "Selecciona una opción: "
         read option
-        
+
         case $option in
             1)
                 echo -n "Ruta (dejar vacío para /sdcard/): "
@@ -526,7 +864,7 @@ files_menu() {
                 path=${path:-/sdcard/}
                 echo -e "\n${CYAN}Contenido de $path:${NC}"
                 mapfile -t files < <(adb shell ls -1 "$path" 2>/dev/null)
-                
+
                 if [ ${#files[@]} -eq 0 ]; then
                     echo -e "${RED}Carpeta vacía o no existe${NC}"
                 else
@@ -554,31 +892,31 @@ files_menu() {
                 echo -n "Ruta en dispositivo (dejar vacío para /sdcard/): "
                 read remote_path
                 remote_path=${remote_path:-/sdcard/}
-                
+
                 echo -e "\n${CYAN}Archivos en $remote_path:${NC}"
                 mapfile -t files < <(adb shell ls -1 "$remote_path" 2>/dev/null)
-                
+
                 if [ ${#files[@]} -eq 0 ]; then
                     echo -e "${RED}Carpeta vacía o no existe${NC}"
                     pause
                     continue
                 fi
-                
+
                 for i in "${!files[@]}"; do
                     echo "$((i+1)). ${files[$i]}"
                 done
-                
+
                 echo ""
                 echo -n "Número de archivo (0 para cancelar): "
                 read num
-                
+
                 if [ "$num" -gt 0 ] 2>/dev/null && [ "$num" -le "${#files[@]}" ]; then
                     selected_file="${files[$((num-1))]}"
                     remote_file="$remote_path/$selected_file"
                     echo -n "Guardar como (dejar vacío para usar nombre original): "
                     read local_file
                     local_file=${local_file:-$selected_file}
-                    
+
                     echo -e "${YELLOW}Descargando archivo...${NC}"
                     adb pull "$remote_file" "$local_file"
                     echo -e "${GREEN}Archivo descargado como $local_file${NC}"
@@ -598,24 +936,24 @@ files_menu() {
                 echo -n "Ruta en dispositivo (dejar vacío para /sdcard/): "
                 read delete_path
                 delete_path=${delete_path:-/sdcard/}
-                
+
                 echo -e "\n${CYAN}Archivos en $delete_path:${NC}"
                 mapfile -t files < <(adb shell ls -1 "$delete_path" 2>/dev/null)
-                
+
                 if [ ${#files[@]} -eq 0 ]; then
                     echo -e "${RED}Carpeta vacía o no existe${NC}"
                     pause
                     continue
                 fi
-                
+
                 for i in "${!files[@]}"; do
                     echo "$((i+1)). ${files[$i]}"
                 done
-                
+
                 echo ""
                 echo -n "Número de archivo/carpeta a eliminar (0 para cancelar): "
                 read num
-                
+
                 if [ "$num" -gt 0 ] 2>/dev/null && [ "$num" -le "${#files[@]}" ]; then
                     selected_file="${files[$((num-1))]}"
                     full_path="$delete_path/$selected_file"
@@ -647,7 +985,7 @@ capture_menu() {
         echo ""
         echo -n "Selecciona una opción: "
         read option
-        
+
         case $option in
             1)
                 FILENAME="$DEVICE_FOLDER/capturas/screenshot_$(date +%Y%m%d_%H%M%S).png"
@@ -695,7 +1033,7 @@ advanced_menu() {
         echo ""
         echo -n "Selecciona una opción: "
         read option
-        
+
         case $option in
             1)
                 echo -e "${RED}¿Reiniciar dispositivo? (s/n): ${NC}"
@@ -752,12 +1090,58 @@ network_menu() {
         echo ""
         echo -n "Selecciona una opción: "
         read option
-        
+
         case $option in
             1)
-                echo -e "\n${CYAN}Información WiFi:${NC}"
-                adb shell dumpsys wifi | grep -E "Wi-Fi|SSID|IP"
-                pause
+                while true; do
+                    show_banner
+                    echo -e "${BLUE}═══ INFORMACIÓN WiFi ═══${NC}"
+                    echo "1. Modo compacto (información esencial)"
+                    echo "2. Modo avanzado (información detallada)"
+                    echo "0. Volver"
+                    echo ""
+                    echo -n "Selecciona una opción: "
+                    read wifi_option
+
+                    case $wifi_option in
+                        1)
+                            echo -e "\n${CYAN}INFORMACIÓN WiFi (MODO COMPACTO):${NC}\n"
+                            
+                            WIFI_STATUS=$(adb shell dumpsys wifi 2>/dev/null | grep "Wi-Fi is" | head -1)
+                            SSID=$(adb shell dumpsys wifi 2>/dev/null | grep 'mWifiInfo SSID:' | grep -oP '(?<=SSID: ")[^"]*')
+                            BSSID=$(adb shell dumpsys wifi 2>/dev/null | grep 'mWifiInfo SSID:' | grep -oP '(?<=BSSID: )[^ ]*')
+                            MAC=$(adb shell dumpsys wifi 2>/dev/null | grep 'mWifiInfo SSID:' | grep -oP '(?<=MAC: )[^ ]*')
+                            IP=$(adb shell dumpsys wifi 2>/dev/null | grep 'mWifiInfo SSID:' | grep -oP '(?<=IP: /)[^ ]*')
+                            RSSI=$(adb shell dumpsys wifi 2>/dev/null | grep 'mWifiInfo SSID:' | grep -oP '(?<=RSSI: )[^ ]*')
+                            SPEED=$(adb shell dumpsys wifi 2>/dev/null | grep 'mWifiInfo SSID:' | grep -oP '(?<=Link speed: )[^ ]*')
+                            SECURITY=$(adb shell dumpsys wifi 2>/dev/null | grep 'mWifiInfo SSID:' | grep -oP '(?<=Security type: )[^ ]*')
+                            STANDARD=$(adb shell dumpsys wifi 2>/dev/null | grep 'mWifiInfo SSID:' | grep -oP '(?<=Wi-Fi standard: )[^ ]*')
+                            FREQ=$(adb shell dumpsys wifi 2>/dev/null | grep 'mWifiInfo SSID:' | grep -oP '(?<=Frequency: )[^ ]*')
+                            
+                            echo -e "${GREEN}Estado WiFi:${NC} ${WIFI_STATUS}"
+                            echo -e "${GREEN}Red (SSID):${NC} $SSID"
+                            echo -e "${GREEN}BSSID:${NC} $BSSID"
+                            echo -e "${GREEN}MAC Address:${NC} $MAC"
+                            echo -e "${GREEN}Dirección IP:${NC} $IP"
+                            echo -e "${GREEN}Señal (RSSI):${NC} $RSSI dBm"
+                            echo -e "${GREEN}Velocidad:${NC} $SPEED"
+                            echo -e "${GREEN}Tipo de seguridad:${NC} $SECURITY"
+                            echo -e "${GREEN}Estándar WiFi:${NC} $STANDARD"
+                            echo -e "${GREEN}Frecuencia:${NC} $FREQ"
+                            
+                            pause
+                            break
+                            ;;
+                        2)
+                            echo -e "\n${CYAN}INFORMACIÓN WiFi (MODO AVANZADO):${NC}\n"
+                            adb shell dumpsys wifi 2>/dev/null
+                            pause
+                            break
+                            ;;
+                        0) break ;;
+                        *) echo -e "${RED}Opción inválida${NC}"; sleep 1 ;;
+                    esac
+                done
                 ;;
             2)
                 echo -e "\n${CYAN}Dirección IP:${NC}"
@@ -804,7 +1188,7 @@ logs_menu() {
         echo ""
         echo -n "Selecciona una opción: "
         read option
-        
+
         case $option in
             1)
                 echo -e "${YELLOW}Mostrando logs (Ctrl+C para detener)${NC}"
@@ -852,7 +1236,7 @@ control_menu() {
         echo ""
         echo -n "Selecciona una opción: "
         read option
-        
+
         case $option in
             1)
                 adb shell input keyevent 3
@@ -915,7 +1299,7 @@ backup_menu() {
         echo ""
         echo -n "Selecciona una opción: "
         read option
-        
+
         case $option in
             1)
                 FILENAME="$DEVICE_FOLDER/backups/backup_completo_$(date +%Y%m%d_%H%M%S).ab"
@@ -928,15 +1312,15 @@ backup_menu() {
             2)
                 echo -e "\n${CYAN}Selecciona una aplicación para backup:${NC}"
                 mapfile -t packages < <(adb shell pm list packages -3 2>/dev/null | cut -d: -f2 | sort)
-                
+
                 for i in "${!packages[@]}"; do
                     echo "$((i+1)). ${packages[$i]}"
                 done
-                
+
                 echo ""
                 echo -n "Número de app (0 para cancelar): "
                 read num
-                
+
                 if [ "$num" -gt 0 ] 2>/dev/null && [ "$num" -le "${#packages[@]}" ]; then
                     selected_package="${packages[$((num-1))]}"
                     FILENAME="$DEVICE_FOLDER/backups/backup_${selected_package}_$(date +%Y%m%d_%H%M%S).ab"
@@ -952,22 +1336,22 @@ backup_menu() {
             3)
                 echo -e "\n${CYAN}Archivos de backup disponibles (.ab):${NC}"
                 mapfile -t backups < <(ls -1 "$DEVICE_FOLDER/backups/"*.ab 2>/dev/null)
-                
+
                 if [ ${#backups[@]} -eq 0 ]; then
                     echo -e "${RED}No hay archivos de backup en $DEVICE_FOLDER/backups${NC}"
                     pause
                     continue
                 fi
-                
+
                 for i in "${!backups[@]}"; do
                     size=$(ls -lh "${backups[$i]}" | awk '{print $5}')
                     echo "$((i+1)). $(basename "${backups[$i]}") ($size)"
                 done
-                
+
                 echo ""
                 echo -n "Número de backup a restaurar (0 para cancelar): "
                 read num
-                
+
                 if [ "$num" -gt 0 ] 2>/dev/null && [ "$num" -le "${#backups[@]}" ]; then
                     selected_backup="${backups[$((num-1))]}"
                     echo -e "${YELLOW}Restaurando $(basename "$selected_backup")...${NC}"
@@ -989,12 +1373,12 @@ generate_report_menu() {
     show_banner
     echo -e "${BLUE}═══ GENERAR REPORTE DEL DISPOSITIVO ═══${NC}"
     echo ""
-    
+
     TIMESTAMP=$(date +"%d-%m-%Y_%H-%M-%S")
     REPORT_FILE="$DEVICE_FOLDER/reportes/reporte_dispositivo_$TIMESTAMP.txt"
-    
+
     echo -e "${YELLOW}Recopilando información del dispositivo...${NC}"
-    
+
     {
         echo ""
         echo "╔════════════════════════════════════════════════════════════════════════╗"
@@ -1009,7 +1393,7 @@ generate_report_menu() {
         echo ""
         echo "════════════════════════════════════════════════════════════════════════"
         echo ""
-        
+
         echo "INFORMACION GENERAL DEL DISPOSITIVO"
         echo "────────────────────────────────────────────────────────────────────────"
         printf "%-35s %s\n" "Fabricante:" "$(adb shell getprop ro.product.manufacturer 2>/dev/null)"
@@ -1017,7 +1401,7 @@ generate_report_menu() {
         printf "%-35s %s\n" "Dispositivo:" "$(adb shell getprop ro.product.device 2>/dev/null)"
         printf "%-35s %s\n" "Nombre del Host:" "$(adb shell getprop ro.build.host 2>/dev/null)"
         echo ""
-        
+
         echo "INFORMACION DE SOFTWARE"
         echo "────────────────────────────────────────────────────────────────────────"
         printf "%-35s %s\n" "Version de Android:" "$(adb shell getprop ro.build.version.release 2>/dev/null)"
@@ -1027,12 +1411,12 @@ generate_report_menu() {
         printf "%-35s %s\n" "Tipo de Compilacion:" "$(adb shell getprop ro.build.type 2>/dev/null)"
         printf "%-35s %s\n" "Fingerprint:" "$(adb shell getprop ro.build.fingerprint 2>/dev/null)"
         echo ""
-        
+
         echo "INFORMACION DE BATERIA"
         echo "────────────────────────────────────────────────────────────────────────"
         adb shell dumpsys battery 2>/dev/null | grep -E "current level|health|status|temperature|voltage|technology|capacity" | sed 's/^  //'
         echo ""
-        
+
         echo "INFORMACION DE CPU"
         echo "────────────────────────────────────────────────────────────────────────"
         printf "%-35s %s\n" "Procesador:" "$(adb shell getprop ro.hardware 2>/dev/null)"
@@ -1042,35 +1426,32 @@ generate_report_menu() {
         echo "Detalles del Procesador:"
         adb shell cat /proc/cpuinfo 2>/dev/null | head -20
         echo ""
-        
+
         echo "MEMORIA RAM"
         echo "────────────────────────────────────────────────────────────────────────"
         adb shell dumpsys meminfo 2>/dev/null | head -20
         echo ""
-        
+
         echo "ALMACENAMIENTO"
         echo "────────────────────────────────────────────────────────────────────────"
         adb shell df -h 2>/dev/null | grep -E "^/|Filesystem"
         echo ""
-        
+
         echo "INFORMACION DE PANTALLA"
         echo "────────────────────────────────────────────────────────────────────────"
         printf "%-35s %s\n" "Resolucion:" "$(adb shell wm size 2>/dev/null | sed 's/Physical size: //')"
         printf "%-35s %s\n" "Densidad (DPI):" "$(adb shell wm density 2>/dev/null | sed 's/Physical density: //')"
         echo ""
-        
+
         echo "APLICACIONES DEL SISTEMA"
         echo "────────────────────────────────────────────────────────────────────────"
         local total_system=$(adb shell pm list packages -s 2>/dev/null | wc -l)
         printf "%-35s %s\n" "Total de Aplicaciones:" "$total_system"
         echo ""
         echo "Listado de Aplicaciones del Sistema:"
-        adb shell pm list packages -s 2>/dev/null | cut -d: -f2 | sort | nl | head -50
-        if [ $(adb shell pm list packages -s 2>/dev/null | wc -l) -gt 50 ]; then
-            echo "... y mas aplicaciones"
-        fi
+        adb shell pm list packages -s 2>/dev/null | cut -d: -f2 | sort | nl
         echo ""
-        
+
         echo "APLICACIONES DE USUARIO"
         echo "────────────────────────────────────────────────────────────────────────"
         local total_user=$(adb shell pm list packages -3 2>/dev/null | wc -l)
@@ -1079,19 +1460,19 @@ generate_report_menu() {
         echo "Listado de Aplicaciones Instaladas:"
         adb shell pm list packages -3 2>/dev/null | cut -d: -f2 | sort | nl
         echo ""
-        
+
         echo "CONECTIVIDAD"
         echo "────────────────────────────────────────────────────────────────────────"
         printf "%-35s %s\n" "Baseband (Modem):" "$(adb shell getprop ro.baseband 2>/dev/null || echo 'N/A')"
         printf "%-35s %s\n" "Soporte Telefonia:" "$(adb shell getprop ro.telephony.use_old_mnc_mcc 2>/dev/null || echo 'N/A')"
         echo ""
-        
+
         echo "SEGURIDAD"
         echo "────────────────────────────────────────────────────────────────────────"
         printf "%-35s %s\n" "Modo Seguro Activado:" "$(adb shell getprop ro.secure 2>/dev/null)"
         printf "%-35s %s\n" "Depuracion Habilitada:" "$(adb shell getprop ro.debuggable 2>/dev/null)"
         echo ""
-        
+
         echo "════════════════════════════════════════════════════════════════════════"
         echo ""
         echo "╔════════════════════════════════════════════════════════════════════════╗"
@@ -1102,9 +1483,9 @@ generate_report_menu() {
         echo "║                                                                        ║"
         echo "╚════════════════════════════════════════════════════════════════════════╝"
         echo ""
-        
+
     } > "$REPORT_FILE" 2>/dev/null
-    
+
     if [ -f "$REPORT_FILE" ] && [ -s "$REPORT_FILE" ]; then
         echo -e "${GREEN}Reporte generado exitosamente${NC}"
         echo ""
@@ -1114,7 +1495,7 @@ generate_report_menu() {
     else
         echo -e "${RED}Error: No se pudo generar el reporte${NC}"
     fi
-    
+
     pause
 }
 
@@ -1131,7 +1512,7 @@ customization_menu() {
         echo ""
         echo -n "Selecciona una opción: "
         read option
-        
+
         case $option in
             1)
                 echo -e "${CYAN}DPI actual:${NC}"
@@ -1163,13 +1544,13 @@ customization_menu() {
                 echo -e "${RED}⚠ Advertencia: Modificar build.prop puede causar problemas${NC}"
                 echo -n "¿Continuar? (s/n): "
                 read confirm
-                
+
                 if [ "$confirm" = "s" ]; then
                     echo -n "Propiedad (ej: ro.build.version.release): "
                     read prop
                     echo -n "Nuevo valor: "
                     read value
-                    
+
                     adb shell "setprop $prop $value" 2>/dev/null
                     echo -e "${GREEN}✓ Propiedad modificada (temporal)${NC}"
                     echo "Nota: Los cambios son temporales. Reinicia para revertir"
@@ -1202,7 +1583,7 @@ security_menu() {
         echo ""
         echo -n "Selecciona una opción: "
         read option
-        
+
         case $option in
             1)
                 echo -n "Contraseña para backup: "
@@ -1212,7 +1593,7 @@ security_menu() {
                 echo -e "${YELLOW}Creando backup encriptado...${NC}"
                 echo "Confirma en el dispositivo"
                 adb backup -all -apk -shared -f "$FILENAME"
-                echo -e "${GREEN}✓ Backup guardado como $FILENAME${NC}"
+                echo -e "${GREEN}Backup guardado como $FILENAME${NC}"
                 pause
                 ;;
             2)
@@ -1249,6 +1630,168 @@ security_menu() {
                 printf "%-35s %s\n" "Depuración USB:" "$(adb shell getprop ro.secure 2>/dev/null)"
                 printf "%-35s %s\n" "Verificación de Bootloader:" "$(adb shell getprop ro.oem_unlock_supported 2>/dev/null)"
                 printf "%-35s %s\n" "Encrypto:" "$(adb shell getprop ro.crypto.state 2>/dev/null)"
+                pause
+                ;;
+            0) break ;;
+            *) echo -e "${RED}Opción inválida${NC}"; sleep 1 ;;
+        esac
+    done
+}
+
+scrcpy_menu() {
+    while true; do
+        show_banner
+        echo -e "${BLUE}═══ ESPEJO DE PANTALLA (SCRCPY) ═══${NC}"
+        echo "1. Espejo sin control (solo visualización)"
+        echo "2. Espejo con control (requiere permisos)"
+        echo "3. Espejo con grabación"
+        echo "4. Espejo sin audio"
+        echo "5. Espejo a resolución específica"
+        echo "6. Habilitar permisos de control en el dispositivo"
+        echo "7. Verificar instalación de Scrcpy"
+        echo "0. Volver"
+        echo ""
+        echo -n "Selecciona una opción: "
+        read option
+
+        case $option in
+            1)
+                if ! command -v scrcpy &> /dev/null; then
+                    echo -e "${RED}✗ Scrcpy no está instalado${NC}"
+                    echo -e "${YELLOW}Instala con:${NC}"
+                    echo "  Ubuntu/Debian: sudo apt install scrcpy"
+                    echo "  Fedora: sudo dnf install scrcpy"
+                    echo "  Arch: sudo pacman -S scrcpy"
+                    echo "  macOS: brew install scrcpy"
+                else
+                    echo -e "${YELLOW}Iniciando espejo de pantalla (sin control)...${NC}"
+                    echo -e "${CYAN}Solo visualización de pantalla${NC}"
+                    echo -e "${CYAN}Presiona Ctrl+C para detener${NC}"
+                    sleep 2
+                    scrcpy --no-control --stay-awake
+                fi
+                pause
+                ;;
+            2)
+                if ! command -v scrcpy &> /dev/null; then
+                    echo -e "${RED}✗ Scrcpy no está instalado${NC}"
+                    echo "Instala con: sudo apt install scrcpy"
+                else
+                    echo -e "${YELLOW}Iniciando espejo con control...${NC}"
+                    echo ""
+                    echo -e "${YELLOW}⚠ Si sale error de permisos 'INJECT_EVENTS':${NC}"
+                    echo -e "${CYAN}1. Opción 6 para habilitar permisos automáticamente${NC}"
+                    echo -e "${CYAN}2. O ejecuta manualmente: adb shell pm grant com.genymobile.scrcpy.control android.permission.INJECT_EVENTS${NC}"
+                    echo ""
+                    echo -e "${CYAN}Controles disponibles:${NC}"
+                    echo "  • Clic izquierdo: Toque"
+                    echo "  • Botón derecho: Menú"
+                    echo "  • Rueda: Scroll"
+                    echo "  • Ctrl+Z: Atrás"
+                    echo "  • Ctrl+P: Inicio"
+                    echo "  • Presiona Ctrl+C para detener${NC}"
+                    sleep 3
+                    scrcpy --stay-awake
+                fi
+                pause
+                ;;
+            3)
+                if ! command -v scrcpy &> /dev/null; then
+                    echo -e "${RED}✗ Scrcpy no está instalado${NC}"
+                    echo "Instala con: sudo apt install scrcpy"
+                else
+                    echo -n "Nombre del archivo de grabación (sin extensión): "
+                    read record_file
+                    record_file=${record_file:-grabacion_scrcpy}
+                    RECORD_PATH="$DEVICE_FOLDER/capturas/${record_file}.mp4"
+                    
+                    echo -e "${YELLOW}Iniciando grabación en $RECORD_PATH...${NC}"
+                    echo -e "${CYAN}Sin control (solo grabación)${NC}"
+                    echo -e "${CYAN}Presiona Ctrl+C para detener la grabación${NC}"
+                    sleep 2
+                    scrcpy --record "$RECORD_PATH" --no-control
+                    
+                    if [ -f "$RECORD_PATH" ]; then
+                        echo -e "${GREEN}✓ Grabación guardada: $RECORD_PATH${NC}"
+                    fi
+                fi
+                pause
+                ;;
+            4)
+                if ! command -v scrcpy &> /dev/null; then
+                    echo -e "${RED}✗ Scrcpy no está instalado${NC}"
+                else
+                    echo -e "${YELLOW}Iniciando espejo sin audio (sin control)...${NC}"
+                    echo -e "${CYAN}Presiona Ctrl+C para detener${NC}"
+                    sleep 2
+                    scrcpy --no-audio --no-control --stay-awake
+                fi
+                pause
+                ;;
+            5)
+                if ! command -v scrcpy &> /dev/null; then
+                    echo -e "${RED}✗ Scrcpy no está instalado${NC}"
+                else
+                    echo -n "Ancho de la ventana (ej: 1280): "
+                    read width
+                    width=${width:-1280}
+                    
+                    echo -e "${YELLOW}Iniciando espejo con resolución: ${width}x...${NC}"
+                    echo -e "${CYAN}Sin control${NC}"
+                    sleep 2
+                    scrcpy --max-size "$width" --no-control --stay-awake
+                fi
+                pause
+                ;;
+            6)
+                echo -e "\n${CYAN}Habilitando permisos para control de scrcpy...${NC}"
+                echo -e "${YELLOW}Asegúrate de que el dispositivo está conectado${NC}"
+                sleep 1
+                
+                echo -e "${YELLOW}Otorgando permiso INJECT_EVENTS...${NC}"
+                adb shell pm grant com.genymobile.scrcpy.control android.permission.INJECT_EVENTS 2>/dev/null
+                
+                if [ $? -eq 0 ]; then
+                    echo -e "${GREEN}✓ Permiso INJECT_EVENTS otorgado exitosamente${NC}"
+                else
+                    echo -e "${YELLOW}⚠ Es posible que el permiso ya esté otorgado o necesites root${NC}"
+                fi
+                
+                echo ""
+                echo -e "${CYAN}Si aún tienes problemas, ejecuta como root:${NC}"
+                echo "  adb root"
+                echo "  adb shell pm grant com.genymobile.scrcpy.control android.permission.INJECT_EVENTS"
+                pause
+                ;;
+            7)
+                echo -e "\n${CYAN}Estado de Scrcpy:${NC}"
+                if command -v scrcpy &> /dev/null; then
+                    echo -e "${GREEN}✓ Scrcpy está instalado${NC}"
+                    scrcpy --version
+                    echo ""
+                    echo -e "${CYAN}Para habilitar control en tu dispositivo:${NC}"
+                    echo "  1. Selecciona opción 6 en este menú"
+                    echo "  2. O ejecuta: adb shell pm grant com.genymobile.scrcpy.control android.permission.INJECT_EVENTS"
+                else
+                    echo -e "${RED}✗ Scrcpy NO está instalado${NC}"
+                    echo ""
+                    echo -e "${YELLOW}Instala scrcpy con uno de estos comandos:${NC}"
+                    echo ""
+                    echo -e "${CYAN}Ubuntu/Debian:${NC}"
+                    echo "  sudo apt update && sudo apt install scrcpy"
+                    echo ""
+                    echo -e "${CYAN}Fedora:${NC}"
+                    echo "  sudo dnf install scrcpy"
+                    echo ""
+                    echo -e "${CYAN}Arch Linux:${NC}"
+                    echo "  sudo pacman -S scrcpy"
+                    echo ""
+                    echo -e "${CYAN}macOS:${NC}"
+                    echo "  brew install scrcpy"
+                    echo ""
+                    echo -e "${CYAN}Desde fuente (todas las plataformas):${NC}"
+                    echo "  https://github.com/Genymobile/scrcpy"
+                fi
                 pause
                 ;;
             0) break ;;
