@@ -1,6 +1,6 @@
-# ADB Manager - Gestor Android
+![ADB Manager Banner](https://github.com/hugooae/ADB-Manager-Gestor-Android/blob/main/multimedia/ADB_M_banner_wbackground.jpg)
 
-![GitHub Repo Size](https://img.shields.io/github/repo-size/hugooae/ADB-Manager-Gestor-Android) ![GitHub](https://img.shields.io/github/license/hugooae/ADB-Manager-Gestor-Android) ![GitHub last commit](https://img.shields.io/github/last-commit/hugooae/ADB-Manager-Gestor-Android) ![Version](https://img.shields.io/badge/version-1.2.1-blue)
+![GitHub Repo Size](https://img.shields.io/github/repo-size/hugooae/ADB-Manager-Gestor-Android) ![GitHub](https://img.shields.io/github/license/hugooae/ADB-Manager-Gestor-Android) ![GitHub last commit](https://img.shields.io/github/last-commit/hugooae/ADB-Manager-Gestor-Android) ![Version](https://img.shields.io/badge/version-1.3.0-blue)
 
 ## Descripción
 
@@ -71,20 +71,42 @@ Al ejecutar el script, verás un **menú interactivo**. Solo selecciona la opci�
 
 ### Menús Principales
 
+**INFORMACIÓN Y DISPOSITIVO**
 | Opción | Descripción                                 |
 | ------ | ------------------------------------------- |
-| 1      | Información del dispositivo                 |
-| 2      | Gestión de aplicaciones                     |
-| 3      | Gestión de archivos                         |
-| 4      | Capturas y grabación                        |
-| 5      | Herramientas avanzadas                      |
-| 6      | Red y conectividad                          |
-| 7      | Logs y monitoreo                            |
-| 8      | Control del dispositivo                     |
-| 9      | Backup y restauración                       |
-| 10     | Personalización del Sistema                 |
-| 11     | Herramientas de Seguridad                   |
-| 12     | Generar Reporte del Dispositivo Conectado  |
+| 1      | Información del Dispositivo                 |
+| 2      | Consulta de Garantía                        |
+| 3      | Generar Reporte del Dispositivo Conectado   |
+
+**APLICACIONES Y ARCHIVOS**
+| Opción | Descripción                                 |
+| ------ | ------------------------------------------- |
+| 4      | Gestión de Aplicaciones                     |
+| 5      | Gestión de Archivos                         |
+| 6      | Backup y Restauración                       |
+
+**CAPTURA Y VISUALIZACIÓN**
+| Opción | Descripción                                 |
+| ------ | ------------------------------------------- |
+| 7      | Capturas y Grabación                        |
+| 8      | Espejo de Pantalla (Scrcpy)                 |
+
+**SISTEMA Y CONECTIVIDAD**
+| Opción | Descripción                                 |
+| ------ | ------------------------------------------- |
+| 9      | Red y Conectividad                          |
+| 10     | Logs y Monitoreo                            |
+| 11     | Control del Dispositivo                     |
+
+**CONFIGURACIÓN Y HERRAMIENTAS**
+| Opción | Descripción                                 |
+| ------ | ------------------------------------------- |
+| 12     | Personalización del Sistema                 |
+| 13     | Herramientas de Seguridad                   |
+| 14     | Herramientas Avanzadas                      |
+
+| Opción | Descripción                                 |
+| ------ | ------------------------------------------- |
 | 0      | Salir                                       |
 
 ---
@@ -134,7 +156,7 @@ Al ejecutar el script, verás un **menú interactivo**. Solo selecciona la opci�
 * **Nuevo en v1.2.0**: Se guarda en carpeta del dispositivo
 * Genera un reporte detallado en formato TXT
 * Incluye toda la información del dispositivo conectado
-* Aplicaciones del sistema y del usuario
+* Aplicaciones del sistema y del usuario (lista completa sin límites)
 * Información de conectividad y seguridad
 * Archivo bien estructurado y fácil de leer
 * Se guarda con timestamp automático
@@ -157,6 +179,72 @@ Al ejecutar el script, verás un **menú interactivo**. Solo selecciona la opci�
 * Backup de aplicaciones individuales
 * Backups encriptados (con contraseña)
 * Restauración de backups guardados
+
+---
+
+## 🆕 Novedades en v1.3.0
+
+* ✅ **Menú reorganizado por categorías**
+  - Información y Dispositivo
+  - Aplicaciones y Archivos
+  - Captura y Visualización
+  - Sistema y Conectividad
+  - Configuración y Herramientas
+  - Navegación más intuitiva y organizada
+
+* ✅ **Información WiFi mejorada**
+  - Modo compacto: Muestra datos esenciales (SSID, IP, RSSI, velocidad, seguridad, etc.)
+  - Modo avanzado: Información detallada completa del sistema WiFi
+  - Ambos modos accesibles desde la opción 1 del menú Red y Conectividad
+
+* ✅ **Banner mejorado con ASCII art**
+  - Nuevo título visual más moderno
+  - Información compacta del dispositivo conectado
+  - Muestra modelo y fabricante en el header
+  - Indica el número de funcionalidades nuevas en la versión
+
+* ✅ **Desinstalación múltiple con rangos**
+  - Selecciona varias apps individuales (ej: 1 2 3 14 42)
+  - Selecciona rangos de apps (ej: 20-74 para desinstalar del 20 al 74)
+  - Combina ambos formatos (ej: 4 1 8 20-74 98 87 102 154-176 199)
+  - Funciona tanto para apps de terceros como del sistema
+  - Resumen de desinstalaciones exitosas y errores
+  - Confirmación antes de desinstalar
+
+* ✅ **Extracción de APKs mejorada**
+  - Soporta extracción de APKs divididos (splits)
+  - Extrae correctamente apps con múltiples componentes (base + config splits)
+  - Crea carpeta organizada por app: `apks/[nombre_app]/`
+  - Mantiene nombres originales de archivos
+  - Manejo automático de rutas complejas de Android
+
+* ✅ **Nuevas funciones para consulta de garantía**
+  - Honor, Lenovo, Huawei, Samsung, Xiaomi, OnePlus, Motorola, OPPO, Vivo, ASUS, Nokia, Google Pixel
+  - Consulta directa de garantía con Serial e IMEI del dispositivo
+
+* ✅ **Espejo de pantalla mejorado con Scrcpy**
+  - Ver pantalla del dispositivo en tiempo real sin control
+  - Espejo con control remoto (mouse y teclado)
+  - Control total de la pantalla del dispositivo
+  - Integración completa con Scrcpy
+  - Opción para habilitar permisos de control automáticamente
+  - Soporte para múltiples resoluciones y ratios
+
+* ✅ **Grabación de pantalla avanzada**
+  - Grabar pantalla con Scrcpy
+  - Grabación sin control (solo video)
+  - Ajuste personalizado de resolución
+  - Guardado automático en carpeta del dispositivo
+
+* ✅ **Validaciones automáticas**
+  - Verificación automática de instalación de Scrcpy
+  - Eliminación automática de duplicados en desinstalaciones
+  - Gestión automática de permisos INJECT_EVENTS para control remoto
+
+* ✅ **Reportes mejorados**
+  - Lista completa de aplicaciones del sistema (sin límites)
+  - Muestra todas las aplicaciones sin truncamiento
+  - Reportes más detallados y completos
 
 ---
 
@@ -192,28 +280,6 @@ Al ejecutar el script, verás un **menú interactivo**. Solo selecciona la opci�
 * ✅ **Versión mejorada en línea 2 del código**
   - Fácil seguimiento de versiones: `#V1.2.0`
   - Banner mejorado con visualización de versión
-
----
-
-## 📋 Versiones
-
-* **v1.2.1** (Actual)
-  - Desinstalación mejorada de apps (sistema y terceros)
-  - Estructura de carpetas por dispositivo perfeccionada
-  - Banner con visualización mejorada de versión
-  - Mejor manejo de errores en desinstalación
-
-* **v1.2.0**
-  - Organización automática por dispositivo
-  - Personalización del sistema
-  - Herramientas de seguridad avanzadas
-
-* **v1.1.0**
-  - Reporte completo del dispositivo
-  - Sistema de actualizaciones automáticas
-
-* **v1.0.0**
-  - Versión inicial con todas las funcionalidades básicas
 
 ---
 
@@ -277,4 +343,4 @@ Este proyecto está bajo la licencia **GNU General Public License v3.0**.
 
 ---
 
-**Última actualización**: 7 de diciembre de 2025
+**Última actualización**: 8 de diciembre de 2025
